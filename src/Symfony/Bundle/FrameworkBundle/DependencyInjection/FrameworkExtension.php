@@ -2781,7 +2781,26 @@ class FrameworkExtension extends Extension
             $config['dsn'] = 'smtp://null';
         }
         $transports = $config['dsn'] ? ['main' => $config['dsn']] : $config['transports'];
-        $container->getDefinition('mailer.transports')->setArgument(0, $transports);
+        $container->getDefinition('mailer.transports')->setArgument(0, array_combine(array_keys($config['transports']), array_column($config['transports'], 'dsn')));
+
+        $transportRateLimiterReferences = [];
+
+        foreach ($transports as $name => $transport) {
+            if ($transport['rate_limiter']) {
+                if (!interface_exists(LimiterInterface::class)) {
+                    throw new LogicException('Rate limiter cannot be used within Mailer as the RateLimiter component is not installed. Try running "composer require symfony/rate-limiter".');
+                }
+
+                $transportRateLimiterReferences[$name] = new Reference('limiter.'.$transport['rate_limiter']);
+            }
+        }
+
+        if (!$transportRateLimiterReferences) {
+            $container->removeDefinition('mailer.rate_limiter_locator');
+        } else {
+            $container->getDefinition('mailer.rate_limiter_locator')
+                ->replaceArgument(0, $transportRateLimiterReferences);
+        }
 
         $mailer = $container->getDefinition('mailer.mailer');
         if (false === $messageBus = $config['message_bus']) {

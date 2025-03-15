@@ -13,6 +13,8 @@ namespace Symfony\Component\Mailer\Messenger;
 
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\TransportInterface;
+use Symfony\Component\Messenger\Exception\RecoverableMessageHandlingException;
+use Symfony\Component\RateLimiter\Exception\RateLimitExceededException;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
@@ -26,6 +28,12 @@ class MessageHandler
 
     public function __invoke(SendEmailMessage $message): ?SentMessage
     {
-        return $this->transport->send($message->getMessage(), $message->getEnvelope());
+        try {
+            return $this->transport->send($message->getMessage(), $message->getEnvelope());
+        } catch (RateLimitExceededException $e) {
+            $retryDelay = $e->getRetryAfter()->getTimestamp() - time();
+
+            throw new RecoverableMessageHandlingException('Rate limit for mailer transport exceeded.', previous: $e, retryDelay: $retryDelay);
+        }
     }
 }
