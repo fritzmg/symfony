@@ -33,7 +33,7 @@ class MessageHandler
         } catch (RateLimitExceededException $e) {
             $retryDelay = ($e->getRetryAfter()->getTimestamp() - time()) * 1000;
 
-            throw new RecoverableMessageHandlingException('Rate limit for mailer transport exceeded.', previous: $e, retryDelay: $retryDelay);
+            throw new RecoverableMessageHandlingException('Rate limit for mailer transport exceeded.', 0, $e, $retryDelay);
         }
     }
 }
