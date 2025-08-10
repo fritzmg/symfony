@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Security\Http\Tests\EventListener;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\Request;
@@ -216,15 +217,13 @@ class IsGrantedAttributeListenerTest extends TestCase
         $listener->onKernelControllerArguments($event);
     }
 
-    /**
-     * @dataProvider getAccessDeniedMessageTests
-     */
+    #[DataProvider('getAccessDeniedMessageTests')]
     public function testAccessDeniedMessages(string|Expression $attribute, string|array|null $subject, string $method, int $numOfArguments, string $expectedMessage)
     {
         $authChecker = new AuthorizationChecker(new TokenStorage(), new AccessDecisionManager((function () use (&$authChecker) {
             yield new ExpressionVoter(new ExpressionLanguage(), null, $authChecker);
             yield new RoleVoter();
-            yield new class() extends Voter {
+            yield new class extends Voter {
                 protected function supports(string $attribute, mixed $subject): bool
                 {
                     return 'POST_VIEW' === $attribute;
@@ -232,7 +231,7 @@ class IsGrantedAttributeListenerTest extends TestCase
 
                 protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
                 {
-                    $vote->reasons[] = 'Because I can 😈.';
+                    $vote?->addReason('Because I can 😈.');
 
                     return false;
                 }

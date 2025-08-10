@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\JsonStreamer\DataModel\Write;
 
-use Symfony\Component\JsonStreamer\DataModel\DataAccessorInterface;
 use Symfony\Component\TypeInfo\Type;
 
 /**
@@ -23,7 +22,11 @@ use Symfony\Component\TypeInfo\Type;
  */
 interface DataModelNodeInterface
 {
+    public function getIdentifier(): string;
+
     public function getType(): Type;
 
-    public function getAccessor(): DataAccessorInterface;
+    public function getAccessor(): string;
+
+    public function withAccessor(string $accessor): self;
 }

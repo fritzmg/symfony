@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\Validator\Tests\Constraints;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Constraints\ExpressionSyntax;
 use Symfony\Component\Validator\Constraints\ExpressionSyntaxValidator;
@@ -26,9 +29,7 @@ class ExpressionSyntaxTest extends TestCase
         self::assertSame(ExpressionSyntaxValidator::class, $constraint->validatedBy());
     }
 
-    /**
-     * @dataProvider provideServiceValidatedConstraints
-     */
+    #[DataProvider('provideServiceValidatedConstraints')]
     public function testValidatedByService(ExpressionSyntax $constraint)
     {
         self::assertSame('my_service', $constraint->validatedBy());
@@ -44,9 +45,8 @@ class ExpressionSyntaxTest extends TestCase
         yield 'attribute' => [$metadata->properties['b']->constraints[0]];
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testValidatedByServiceDoctrineStyle()
     {
         $constraint = new ExpressionSyntax(['service' => 'my_service']);

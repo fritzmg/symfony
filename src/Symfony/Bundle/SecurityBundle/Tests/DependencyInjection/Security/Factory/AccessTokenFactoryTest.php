@@ -11,6 +11,9 @@
 
 namespace Symfony\Bundle\SecurityBundle\Tests\DependencyInjection\Security\Factory;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\AccessToken\CasTokenHandlerFactory;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\AccessToken\OAuth2TokenHandlerFactory;
@@ -183,13 +186,12 @@ class AccessTokenFactoryTest extends TestCase
         $this->processConfig($config, $factory);
     }
 
-    /**
-     * @group legacy
-     *
-     * @expectedDeprecation Since symfony/security-bundle 7.1: The "key" option is deprecated and will be removed in 8.0. Use the "keyset" option instead.
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testOidcTokenHandlerConfigurationWithSingleAlgorithm()
     {
+        $this->expectUserDeprecationMessage('Since symfony/security-bundle 7.1: The "key" option is deprecated and will be removed in 8.0. Use the "keyset" option instead.');
+
         $container = new ContainerBuilder();
         $jwk = '{"kty":"EC","crv":"P-256","x":"0QEAsI1wGI-dmYatdUZoWSRWggLEpyzopuhwk-YUnA4","y":"KYl-qyZ26HobuYwlQh-r0iHX61thfP82qqEku7i0woo","d":"iA_TV2zvftni_9aFAQwFO_9aypfJFCSpcCyevDvz220"}';
         $config = [
@@ -421,9 +423,7 @@ class AccessTokenFactoryTest extends TestCase
         $this->assertEquals($expected, $container->getDefinition('security.access_token_handler.firewall1')->getArguments());
     }
 
-    /**
-     * @dataProvider getOidcUserInfoConfiguration
-     */
+    #[DataProvider('getOidcUserInfoConfiguration')]
     public function testOidcUserInfoTokenHandlerConfigurationWithBaseUri(array|string $configuration)
     {
         $container = new ContainerBuilder();

@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\SecurityBundle\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -55,9 +56,7 @@ class SecurityTest extends TestCase
         $this->assertSame($token, $security->getToken());
     }
 
-    /**
-     * @dataProvider getUserTests
-     */
+    #[DataProvider('getUserTests')]
     public function testGetUser($userInToken, $expectedUser)
     {
         $token = $this->createMock(TokenInterface::class);
@@ -99,9 +98,7 @@ class SecurityTest extends TestCase
         $this->assertTrue($security->isGranted('SOME_ATTRIBUTE', 'SOME_SUBJECT'));
     }
 
-    /**
-     * @dataProvider getFirewallConfigTests
-     */
+    #[DataProvider('getFirewallConfigTests')]
     public function testGetFirewallConfig(Request $request, ?FirewallConfig $expectedFirewallConfig)
     {
         $firewallMap = $this->createMock(FirewallMap::class);
@@ -152,7 +149,10 @@ class SecurityTest extends TestCase
         $firewallAuthenticatorLocator
             ->expects($this->once())
             ->method('getProvidedServices')
-            ->willReturn(['security.authenticator.custom.dev' => $authenticator])
+            ->willReturn([
+                'security.authenticator.custom.dev' => $authenticator,
+                'security.authenticator.remember_me.main' => $authenticator,
+            ])
         ;
         $firewallAuthenticatorLocator
             ->expects($this->once())
@@ -249,6 +249,49 @@ class SecurityTest extends TestCase
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Unable to login without a request context.');
 
+        $security->login($user);
+    }
+
+    public function testLoginFailsWhenTooManyAuthenticatorsFound()
+    {
+        $request = new Request();
+        $authenticator = $this->createMock(AuthenticatorInterface::class);
+        $requestStack = $this->createMock(RequestStack::class);
+        $firewallMap = $this->createMock(FirewallMap::class);
+        $firewall = new FirewallConfig('main', 'main');
+        $userAuthenticator = $this->createMock(UserAuthenticatorInterface::class);
+        $user = $this->createMock(UserInterface::class);
+        $userChecker = $this->createMock(UserCheckerInterface::class);
+
+        $container = $this->createMock(ContainerInterface::class);
+        $container
+            ->expects($this->atLeastOnce())
+            ->method('get')
+            ->willReturnMap([
+                ['request_stack', $requestStack],
+                ['security.firewall.map', $firewallMap],
+                ['security.authenticator.managers_locator', $this->createContainer('main', $userAuthenticator)],
+                ['security.user_checker_locator', $this->createContainer('main', $userChecker)],
+            ])
+        ;
+
+        $requestStack->expects($this->once())->method('getCurrentRequest')->willReturn($request);
+        $firewallMap->expects($this->once())->method('getFirewallConfig')->willReturn($firewall);
+
+        $firewallAuthenticatorLocator = $this->createMock(ServiceProviderInterface::class);
+        $firewallAuthenticatorLocator
+            ->expects($this->once())
+            ->method('getProvidedServices')
+            ->willReturn([
+                'security.authenticator.custom.main' => $authenticator,
+                'security.authenticator.other.main' => $authenticator,
+            ])
+        ;
+
+        $security = new Security($container, ['main' => $firewallAuthenticatorLocator]);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Too many authenticators were found for the current firewall "main". You must provide an instance of "Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface" to login programmatically. The available authenticators for the firewall "main" are "security.authenticator.custom.main" ,"security.authenticator.other.main');
         $security->login($user);
     }
 

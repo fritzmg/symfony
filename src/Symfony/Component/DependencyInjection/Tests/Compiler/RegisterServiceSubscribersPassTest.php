@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\DependencyInjection\Tests\Compiler;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
@@ -452,15 +454,14 @@ class RegisterServiceSubscribersPassTest extends TestCase
             'autowired' => new ServiceClosureArgument(new TypedReference('service.id', 'stdClass', ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE, 'autowired', [new Autowire(service: 'service.id')])),
             'autowired.nullable' => new ServiceClosureArgument(new TypedReference('service.id', 'stdClass', ContainerInterface::IGNORE_ON_INVALID_REFERENCE, 'autowired.nullable', [new Autowire(service: 'service.id')])),
             'autowired.parameter' => new ServiceClosureArgument('foobar'),
-            'autowire.decorated' => new ServiceClosureArgument(new Reference('.service_locator.oNVewcO.inner', ContainerInterface::NULL_ON_INVALID_REFERENCE)),
+            'autowire.decorated' => new ServiceClosureArgument(new Reference('.service_locator.Di.wrC8.inner', ContainerInterface::NULL_ON_INVALID_REFERENCE)),
             'target' => new ServiceClosureArgument(new TypedReference('stdClass', 'stdClass', ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE, 'target', [new Target('someTarget')])),
         ];
         $this->assertEquals($expected, $container->getDefinition((string) $locator->getFactory()[0])->getArgument(0));
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testSubscribedServiceWithLegacyAttributes()
     {
         $container = new ContainerBuilder();

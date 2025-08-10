@@ -12,6 +12,8 @@
 namespace Symfony\Component\Form\Tests\Extension\Core\EventListener;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Form\AbstractType;
@@ -43,9 +45,8 @@ class ResizeFormListenerTest extends TestCase
         return new FormBuilder($name, null, new EventDispatcher(), $this->factory);
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testPreSetDataResizesForm()
     {
         $this->builder->add($this->getBuilder('0'));
@@ -93,9 +94,8 @@ class ResizeFormListenerTest extends TestCase
         $this->assertSame('string', $form->get('2')->getData());
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testPreSetDataRequiresArrayOrTraversable()
     {
         $this->expectException(UnexpectedTypeException::class);
@@ -119,9 +119,8 @@ class ResizeFormListenerTest extends TestCase
         $listener->postSetData($event);
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testPreSetDataDealsWithNullData()
     {
         $data = null;
@@ -310,7 +309,7 @@ class ResizeFormListenerTest extends TestCase
         $this->assertArrayNotHasKey(2, $event->getData());
     }
 
-    public function testOnSubmitDealsWithArrayBackedIteratorAggregate()
+    public function testOnSubmitDealsWithDoctrineCollection()
     {
         $this->builder->add($this->getBuilder('1'));
 
@@ -321,6 +320,19 @@ class ResizeFormListenerTest extends TestCase
 
         $this->assertArrayNotHasKey(0, $event->getData());
         $this->assertArrayNotHasKey(2, $event->getData());
+    }
+
+    public function testKeepAsListWorksWithTraversableArrayAccess()
+    {
+        $this->builder->add($this->getBuilder('1'));
+
+        $data = new \ArrayIterator([0 => 'first', 1 => 'second', 2 => 'third']);
+        $event = new FormEvent($this->builder->getForm(), $data);
+        $listener = new ResizeFormListener(TextType::class, keepAsList: true);
+        $listener->onSubmit($event);
+
+        $this->assertCount(1, $event->getData());
+        $this->assertArrayHasKey(0, $event->getData());
     }
 
     public function testOnSubmitDeleteEmptyNotCompoundEntriesIfAllowDelete()

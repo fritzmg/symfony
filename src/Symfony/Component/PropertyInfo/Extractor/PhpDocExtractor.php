@@ -80,7 +80,6 @@ class PhpDocExtractor implements PropertyDescriptionExtractorInterface, Property
 
     public function getShortDescription(string $class, string $property, array $context = []): ?string
     {
-        /** @var DocBlock $docBlock */
         [$docBlock] = $this->findDocBlock($class, $property);
         if (!$docBlock) {
             return null;
@@ -107,7 +106,6 @@ class PhpDocExtractor implements PropertyDescriptionExtractorInterface, Property
 
     public function getLongDescription(string $class, string $property, array $context = []): ?string
     {
-        /** @var DocBlock $docBlock */
         [$docBlock] = $this->findDocBlock($class, $property);
         if (!$docBlock) {
             return null;
@@ -118,9 +116,13 @@ class PhpDocExtractor implements PropertyDescriptionExtractorInterface, Property
         return '' === $contents ? null : $contents;
     }
 
+    /**
+     * @deprecated since Symfony 7.3, use "getType" instead
+     */
     public function getTypes(string $class, string $property, array $context = []): ?array
     {
-        /** @var DocBlock $docBlock */
+        trigger_deprecation('symfony/property-info', '7.3', 'The "%s()" method is deprecated, use "%s::getType()" instead.', __METHOD__, self::class);
+
         [$docBlock, $source, $prefix] = $this->findDocBlock($class, $property);
         if (!$docBlock) {
             return null;
@@ -171,8 +173,13 @@ class PhpDocExtractor implements PropertyDescriptionExtractorInterface, Property
         return [new LegacyType(LegacyType::BUILTIN_TYPE_ARRAY, false, null, true, new LegacyType(LegacyType::BUILTIN_TYPE_INT), $types[0])];
     }
 
+    /**
+     * @deprecated since Symfony 7.3, use "getTypeFromConstructor" instead
+     */
     public function getTypesFromConstructor(string $class, string $property): ?array
     {
+        trigger_deprecation('symfony/property-info', '7.3', 'The "%s()" method is deprecated, use "%s::getTypeFromConstructor()" instead.', __METHOD__, self::class);
+
         $docBlock = $this->getDocBlockFromConstructor($class, $property);
 
         if (!$docBlock) {

@@ -18,6 +18,7 @@ use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprIntegerNode;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprNullNode;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprStringNode;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprTrueNode;
+use PHPStan\PhpDocParser\Ast\ConstExpr\ConstFetchNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\CallableTypeNode;
@@ -38,6 +39,7 @@ use PHPStan\PhpDocParser\ParserConfig;
 use Symfony\Component\TypeInfo\Exception\InvalidArgumentException;
 use Symfony\Component\TypeInfo\Exception\UnsupportedException;
 use Symfony\Component\TypeInfo\Type;
+use Symfony\Component\TypeInfo\Type\BackedEnumType;
 use Symfony\Component\TypeInfo\Type\BuiltinType;
 use Symfony\Component\TypeInfo\Type\CollectionType;
 use Symfony\Component\TypeInfo\Type\GenericType;
@@ -110,7 +112,12 @@ final class StringTypeResolver implements TypeResolverInterface
                 ];
             }
 
-            return Type::arrayShape($shape);
+            return Type::arrayShape(
+                $shape,
+                $node->sealed,
+                $node->unsealedType?->keyType ? $this->getTypeFromNode($node->unsealedType->keyType, $typeContext) : null,
+                $node->unsealedType?->valueType ? $this->getTypeFromNode($node->unsealedType->valueType, $typeContext) : null,
+            );
         }
 
         if ($node instanceof ObjectShapeNode) {
@@ -126,6 +133,29 @@ final class StringTypeResolver implements TypeResolverInterface
         }
 
         if ($node instanceof ConstTypeNode) {
+            if ($node->constExpr instanceof ConstFetchNode) {
+                $className = match (strtolower($node->constExpr->className)) {
+                    'self' => $typeContext->getDeclaringClass(),
+                    'static' => $typeContext->getCalledClass(),
+                    'parent' => $typeContext->getParentClass(),
+                    default => $node->constExpr->className,
+                };
+
+                if (!class_exists($className)) {
+                    return Type::mixed();
+                }
+
+                $types = [];
+
+                foreach ((new \ReflectionClass($className))->getReflectionConstants() as $const) {
+                    if (preg_match('/^'.str_replace('\*', '.*', preg_quote($node->constExpr->name, '/')).'$/', $const->getName())) {
+                        $types[] = Type::fromValue($const->getValue());
+                    }
+                }
+
+                return CollectionType::mergeCollectionValueTypes($types);
+            }
+
             return match ($node->constExpr::class) {
                 ConstExprArrayNode::class => Type::array(),
                 ConstExprFalseNode::class => Type::false(),
@@ -166,7 +196,7 @@ final class StringTypeResolver implements TypeResolverInterface
                 'iterable' => Type::iterable(),
                 'mixed' => Type::mixed(),
                 'null' => Type::null(),
-                'array-key' => Type::union(Type::int(), Type::string()),
+                'array-key' => Type::arrayKey(),
                 'scalar' => Type::union(Type::int(), Type::float(), Type::string(), Type::bool()),
                 'number' => Type::union(Type::int(), Type::float()),
                 'numeric' => Type::union(Type::int(), Type::float(), Type::string()),
@@ -190,6 +220,28 @@ final class StringTypeResolver implements TypeResolverInterface
         }
 
         if ($node instanceof GenericTypeNode) {
+            if ($node->type instanceof IdentifierTypeNode && 'value-of' === $node->type->name) {
+                $type = $this->getTypeFromNode($node->genericTypes[0], $typeContext);
+                if ($type instanceof BackedEnumType) {
+                    return $type->getBackingType();
+                }
+
+                if ($type instanceof CollectionType) {
+                    return $type->getCollectionValueType();
+                }
+
+                throw new \DomainException(\sprintf('"%s" is not a valid type for "value-of".', $node->genericTypes[0]));
+            }
+
+            if ($node->type instanceof IdentifierTypeNode && 'key-of' === $node->type->name) {
+                $type = $this->getTypeFromNode($node->genericTypes[0], $typeContext);
+                if ($type instanceof CollectionType) {
+                    return $type->getCollectionKeyType();
+                }
+
+                throw new \DomainException(\sprintf('"%s" is not a valid type for "key-of".', $node->genericTypes[0]));
+            }
+
             $type = $this->getTypeFromNode($node->type, $typeContext);
 
             // handle integer ranges as simple integers

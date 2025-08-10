@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\JsonStreamer\DataModel\Write;
 
-use Symfony\Component\JsonStreamer\DataModel\DataAccessorInterface;
 use Symfony\Component\TypeInfo\Type\ObjectType;
 
 /**
@@ -27,13 +26,34 @@ final class ObjectNode implements DataModelNodeInterface
      * @param array<string, DataModelNodeInterface> $properties
      */
     public function __construct(
-        private DataAccessorInterface $accessor,
+        private string $accessor,
         private ObjectType $type,
         private array $properties,
+        private bool $mock = false,
     ) {
     }
 
-    public function getAccessor(): DataAccessorInterface
+    public static function createMock(string $accessor, ObjectType $type): self
+    {
+        return new self($accessor, $type, [], true);
+    }
+
+    public function withAccessor(string $accessor): self
+    {
+        $properties = [];
+        foreach ($this->properties as $key => $property) {
+            $properties[$key] = $property->withAccessor(str_replace($this->accessor, $accessor, $property->getAccessor()));
+        }
+
+        return new self($accessor, $this->type, $properties, $this->mock);
+    }
+
+    public function getIdentifier(): string
+    {
+        return (string) $this->getType();
+    }
+
+    public function getAccessor(): string
     {
         return $this->accessor;
     }
@@ -49,5 +69,10 @@ final class ObjectNode implements DataModelNodeInterface
     public function getProperties(): array
     {
         return $this->properties;
+    }
+
+    public function isMock(): bool
+    {
+        return $this->mock;
     }
 }

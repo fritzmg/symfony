@@ -11,51 +11,47 @@
 
 namespace Symfony\Component\VarDumper\Tests\Caster;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
+use PHPUnit\Framework\Attributes\RequiresPhp;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait;
 use Symfony\Component\VarDumper\Caster\ResourceCaster;
 use Symfony\Component\VarDumper\Cloner\Stub;
 use Symfony\Component\VarDumper\Test\VarDumperTestTrait;
 
 class ResourceCasterTest extends TestCase
 {
-    use ExpectDeprecationTrait;
     use VarDumperTestTrait;
 
-    /**
-     * @group legacy
-     *
-     * @requires extension curl
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[RequiresPhpExtension('curl')]
     public function testCastCurlIsDeprecated()
     {
         $ch = curl_init('http://example.com');
         curl_setopt($ch, \CURLOPT_RETURNTRANSFER, true);
         curl_exec($ch);
 
-        $this->expectDeprecation('Since symfony/var-dumper 7.3: The "Symfony\Component\VarDumper\Caster\ResourceCaster::castCurl()" method is deprecated without replacement.');
+        $this->expectUserDeprecationMessage('Since symfony/var-dumper 7.3: The "Symfony\Component\VarDumper\Caster\ResourceCaster::castCurl()" method is deprecated without replacement.');
 
         ResourceCaster::castCurl($ch, [], new Stub(), false);
     }
 
-    /**
-     * @group legacy
-     *
-     * @requires extension gd
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[RequiresPhpExtension('gd')]
     public function testCastGdIsDeprecated()
     {
         $gd = imagecreate(1, 1);
 
-        $this->expectDeprecation('Since symfony/var-dumper 7.3: The "Symfony\Component\VarDumper\Caster\ResourceCaster::castGd()" method is deprecated without replacement.');
+        $this->expectUserDeprecationMessage('Since symfony/var-dumper 7.3: The "Symfony\Component\VarDumper\Caster\ResourceCaster::castGd()" method is deprecated without replacement.');
 
         ResourceCaster::castGd($gd, [], new Stub(), false);
     }
 
-    /**
-     * @requires PHP < 8.4
-     * @requires extension dba
-     */
+    #[RequiresPhp('<8.4')]
+    #[RequiresPhpExtension('dba')]
     public function testCastDbaPriorToPhp84()
     {
         $dba = dba_open(sys_get_temp_dir().'/test.db', 'c');
@@ -68,15 +64,10 @@ dba resource {
 EODUMP, $dba);
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4.2')]
+    #[RequiresPhpExtension('dba')]
     public function testCastDba()
     {
-        if (\PHP_VERSION_ID < 80402) {
-            $this->markTestSkipped('The test cannot be run on PHP 8.4.0 and PHP 8.4.1, see https://github.com/php/php-src/issues/16990');
-        }
-
         $dba = dba_open(sys_get_temp_dir().'/test.db', 'c');
 
         $this->assertDumpMatchesFormat(
@@ -87,9 +78,8 @@ Dba\Connection {
 EODUMP, $dba);
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
+    #[RequiresPhpExtension('dba')]
     public function testCastDbaOnBuggyPhp84()
     {
         if (\PHP_VERSION_ID >= 80402) {

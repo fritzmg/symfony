@@ -48,7 +48,7 @@ final class Builder
             // 263A FE0F    ; fully-qualified     # ☺️ E0.6 smiling face
             preg_match('{^(?<codePoints>[\w ]+) +; [\w-]+ +# (?<emoji>.+) E\d+\.\d+ ?(?<name>.+)$}Uu', $line, $matches);
             if (!$matches) {
-                throw new \DomainException("Could not parse line: \"$line\".");
+                throw new DomainException("Could not parse line: \"$line\".");
             }
 
             $codePoints = str_replace(' ', '-', trim($matches['codePoints']));
@@ -149,14 +149,10 @@ final class Builder
         $emojis = json_decode((new Filesystem())->readFile(__DIR__.'/vendor/gitlab-emojis.json'), true, flags: JSON_THROW_ON_ERROR);
         $maps = [];
 
-        foreach ($emojis as $emojiItem) {
+        foreach ($emojis as $shortName => $emojiItem) {
             $emoji = $emojiItem['moji'];
             $emojiPriority = mb_strlen($emoji) << 1;
-            $maps[$emojiPriority + 1][$emojiItem['shortname']] = $emoji;
-
-            foreach ($emojiItem['aliases'] as $alias) {
-                $maps[$emojiPriority][$alias] = $emoji;
-            }
+            $maps[$emojiPriority + 1][":$shortName:"] = $emoji;
         }
 
         return $maps;

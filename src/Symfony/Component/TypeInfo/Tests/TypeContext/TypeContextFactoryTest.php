@@ -15,10 +15,15 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\TypeInfo\Exception\LogicException;
 use Symfony\Component\TypeInfo\Tests\Fixtures\AbstractDummy;
 use Symfony\Component\TypeInfo\Tests\Fixtures\Dummy;
+use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithImportedOnlyTypeAliases;
+use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithInvalidTypeAlias;
 use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithInvalidTypeAliasImport;
+use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithRecursiveTypeAliases;
 use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithTemplates;
 use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithTypeAliases;
+use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithTypeAliasImportedFromInvalidClassName;
 use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithUses;
+use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithUsesWindowsLineEndings;
 use Symfony\Component\TypeInfo\Type;
 use Symfony\Component\TypeInfo\TypeContext\TypeContextFactory;
 use Symfony\Component\TypeInfo\TypeResolver\StringTypeResolver;
@@ -85,6 +90,24 @@ class TypeContextFactoryTest extends TestCase
         $this->assertEquals($uses, $this->typeContextFactory->createFromReflection(new \ReflectionParameter([DummyWithUses::class, 'setCreatedAt'], 'createdAt'))->uses);
     }
 
+    public function testCollectUsesWindowsLineEndings()
+    {
+        self::assertSame(\count(file(__DIR__.'/../Fixtures/DummyWithUsesWindowsLineEndings.php')), substr_count(file_get_contents(__DIR__.'/../Fixtures/DummyWithUsesWindowsLineEndings.php'), "\r\n"));
+
+        $uses = [
+            'Type' => Type::class,
+            \DateTimeInterface::class => '\\'.\DateTimeInterface::class,
+            'DateTime' => '\\'.\DateTimeImmutable::class,
+        ];
+
+        $this->assertSame($uses, $this->typeContextFactory->createFromClassName(DummyWithUsesWindowsLineEndings::class)->uses);
+
+        $this->assertEquals($uses, $this->typeContextFactory->createFromReflection(new \ReflectionClass(DummyWithUsesWindowsLineEndings::class))->uses);
+        $this->assertEquals($uses, $this->typeContextFactory->createFromReflection(new \ReflectionProperty(DummyWithUsesWindowsLineEndings::class, 'createdAt'))->uses);
+        $this->assertEquals($uses, $this->typeContextFactory->createFromReflection(new \ReflectionMethod(DummyWithUsesWindowsLineEndings::class, 'setCreatedAt'))->uses);
+        $this->assertEquals($uses, $this->typeContextFactory->createFromReflection(new \ReflectionParameter([DummyWithUsesWindowsLineEndings::class, 'setCreatedAt'], 'createdAt'))->uses);
+    }
+
     public function testCollectTemplates()
     {
         $this->assertEquals([], $this->typeContextFactory->createFromClassName(Dummy::class)->templates);
@@ -128,29 +151,39 @@ class TypeContextFactoryTest extends TestCase
         $this->assertEquals([
             'CustomString' => Type::string(),
             'CustomInt' => Type::int(),
+            'CustomArray' => Type::arrayShape([0 => Type::int(), 1 => Type::string(), 2 => Type::bool()]),
             'AliasedCustomInt' => Type::int(),
             'PsalmCustomString' => Type::string(),
             'PsalmCustomInt' => Type::int(),
+            'PsalmCustomArray' => Type::arrayShape([0 => Type::int(), 1 => Type::string(), 2 => Type::bool()]),
             'PsalmAliasedCustomInt' => Type::int(),
         ], $this->typeContextFactory->createFromClassName(DummyWithTypeAliases::class)->typeAliases);
 
         $this->assertEquals([
             'CustomString' => Type::string(),
             'CustomInt' => Type::int(),
+            'CustomArray' => Type::arrayShape([0 => Type::int(), 1 => Type::string(), 2 => Type::bool()]),
             'AliasedCustomInt' => Type::int(),
             'PsalmCustomString' => Type::string(),
             'PsalmCustomInt' => Type::int(),
+            'PsalmCustomArray' => Type::arrayShape([0 => Type::int(), 1 => Type::string(), 2 => Type::bool()]),
             'PsalmAliasedCustomInt' => Type::int(),
         ], $this->typeContextFactory->createFromReflection(new \ReflectionClass(DummyWithTypeAliases::class))->typeAliases);
 
         $this->assertEquals([
             'CustomString' => Type::string(),
             'CustomInt' => Type::int(),
+            'CustomArray' => Type::arrayShape([0 => Type::int(), 1 => Type::string(), 2 => Type::bool()]),
             'AliasedCustomInt' => Type::int(),
             'PsalmCustomString' => Type::string(),
             'PsalmCustomInt' => Type::int(),
+            'PsalmCustomArray' => Type::arrayShape([0 => Type::int(), 1 => Type::string(), 2 => Type::bool()]),
             'PsalmAliasedCustomInt' => Type::int(),
         ], $this->typeContextFactory->createFromReflection(new \ReflectionProperty(DummyWithTypeAliases::class, 'localAlias'))->typeAliases);
+
+        $this->assertEquals([
+            'CustomInt' => Type::int(),
+        ], $this->typeContextFactory->createFromReflection(new \ReflectionClass(DummyWithImportedOnlyTypeAliases::class))->typeAliases);
     }
 
     public function testDoNotCollectTypeAliasesWhenToStringTypeResolver()
@@ -166,5 +199,29 @@ class TypeContextFactoryTest extends TestCase
         $this->expectExceptionMessage(\sprintf('Cannot find any "Invalid" type alias in "%s".', DummyWithTypeAliases::class));
 
         $this->typeContextFactory->createFromClassName(DummyWithInvalidTypeAliasImport::class);
+    }
+
+    public function testThrowWhenCannotResolveTypeAlias()
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Cannot resolve "Invalid" type alias.');
+
+        $this->typeContextFactory->createFromClassName(DummyWithInvalidTypeAlias::class);
+    }
+
+    public function testThrowWhenTypeAliasNotImportedFromValidClassName()
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Type alias "Invalid" is not imported from a valid class name.');
+
+        $this->typeContextFactory->createFromClassName(DummyWithTypeAliasImportedFromInvalidClassName::class);
+    }
+
+    public function testThrowWhenImportingRecursiveTypeAliases()
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Cannot resolve "Bar" type alias.');
+
+        $this->typeContextFactory->createFromClassName(DummyWithRecursiveTypeAliases::class)->typeAliases;
     }
 }

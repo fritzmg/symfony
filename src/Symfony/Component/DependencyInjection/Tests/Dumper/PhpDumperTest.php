@@ -11,9 +11,13 @@
 
 namespace Symfony\Component\DependencyInjection\Tests\Dumper;
 
+use Bar\FooLazyClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
-use Symfony\Bridge\PhpUnit\ExpectUserDeprecationMessageTrait;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Argument\AbstractArgument;
 use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
@@ -75,11 +79,10 @@ require_once __DIR__.'/../Fixtures/includes/autowiring_classes.php';
 require_once __DIR__.'/../Fixtures/includes/classes.php';
 require_once __DIR__.'/../Fixtures/includes/foo.php';
 require_once __DIR__.'/../Fixtures/includes/foo_lazy.php';
+require_once __DIR__.'/../Fixtures/includes/fixture_app_services.php';
 
 class PhpDumperTest extends TestCase
 {
-    use ExpectUserDeprecationMessageTrait;
-
     protected static string $fixturesPath;
 
     public static function setUpBeforeClass(): void
@@ -327,7 +330,7 @@ class PhpDumperTest extends TestCase
         $container->setParameter('container.dumper.inline_class_loader', true);
 
         $container->register('lazy_foo', \Bar\FooClass::class)
-            ->addArgument(new Definition(\Bar\FooLazyClass::class))
+            ->addArgument(new Definition(FooLazyClass::class))
             ->setPublic(true)
             ->setLazy(true);
 
@@ -403,9 +406,7 @@ class PhpDumperTest extends TestCase
         $this->assertTrue(method_exists($class, 'getFoobar2Service'));
     }
 
-    /**
-     * @dataProvider provideInvalidFactories
-     */
+    #[DataProvider('provideInvalidFactories')]
     public function testInvalidFactories($factory)
     {
         $this->expectException(RuntimeException::class);
@@ -479,10 +480,10 @@ class PhpDumperTest extends TestCase
     }
 
     /**
-     * The test should be kept in the group as it always expects a deprecation.
-     *
-     * @group legacy
+     * The test must be marked as ignoring deprecations as it always expects a deprecation.
      */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testDeprecatedParameters()
     {
         $container = include self::$fixturesPath.'/containers/container_deprecated_parameters.php';
@@ -496,10 +497,10 @@ class PhpDumperTest extends TestCase
     }
 
     /**
-     * The test should be kept in the group as it always expects a deprecation.
-     *
-     * @group legacy
+     * The test must be marked as ignoring deprecations as it always expects a deprecation.
      */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testDeprecatedParametersAsFiles()
     {
         $container = include self::$fixturesPath.'/containers/container_deprecated_parameters.php';
@@ -779,7 +780,7 @@ class PhpDumperTest extends TestCase
         $container = new ContainerBuilder();
 
         $container
-            ->register('foo', \Bar\FooLazyClass::class)
+            ->register('foo', FooLazyClass::class)
             ->setFile(realpath(self::$fixturesPath.'/includes/foo_lazy.php'))
             ->setShared(false)
             ->setLazy(true)
@@ -823,7 +824,7 @@ class PhpDumperTest extends TestCase
         $container = new ContainerBuilder();
 
         $container
-            ->register('non_shared_foo', \Bar\FooLazyClass::class)
+            ->register('non_shared_foo', FooLazyClass::class)
             ->setFile(realpath(self::$fixturesPath.'/includes/foo_lazy.php'))
             ->setShared(false)
             ->setLazy(true)
@@ -868,10 +869,8 @@ class PhpDumperTest extends TestCase
         $this->assertNotSame($foo1, $foo2);
     }
 
-    /**
-     * @testWith [false]
-     *           [true]
-     */
+    #[TestWith([false])]
+    #[TestWith([true])]
     public function testNonSharedLazyDefinitionReferences(bool $asGhostObject)
     {
         $container = new ContainerBuilder();
@@ -1219,9 +1218,7 @@ class PhpDumperTest extends TestCase
         $this->assertEquals(['foo1' => new \stdClass(), 'foo3' => new \stdClass()], iterator_to_array($bar->iter));
     }
 
-    /**
-     * @dataProvider provideAlmostCircular
-     */
+    #[DataProvider('provideAlmostCircular')]
     public function testAlmostCircular($visibility)
     {
         $container = include self::$fixturesPath.'/containers/container_almost_circular.php';
@@ -1317,7 +1314,7 @@ class PhpDumperTest extends TestCase
             ->setProperty('bar', $bar)
             ->addArgument($bar);
 
-        $container->register('App\Foo')
+        $container->register('App\Foo', 'App\Foo')
             ->setPublic(true)
             ->addArgument($baz);
 
@@ -1800,10 +1797,10 @@ PHP
     }
 
     /**
-     * The test should be kept in the group as it always expects a deprecation.
-     *
-     * @group legacy
+     * The test must be marked as ignoring deprecations as it always expects a deprecation.
      */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testDirectlyAccessingDeprecatedPublicService()
     {
         $this->expectUserDeprecationMessage('Since foo/bar 3.8: Accessing the "bar" service directly from the container is deprecated, use dependency injection instead.');
@@ -1877,7 +1874,7 @@ PHP
     {
         $container = new ContainerBuilder();
         $container->register('closure_proxy', SingleMethodInterface::class)
-            ->setPublic('true')
+            ->setPublic(true)
             ->setFactory(['Closure', 'fromCallable'])
             ->setArguments([[new Reference('foo'), 'cloneFoo']])
             ->setLazy(true);
@@ -1899,12 +1896,12 @@ PHP
     {
         $container = new ContainerBuilder();
         $container->register('closure', 'Closure')
-            ->setPublic('true')
+            ->setPublic(true)
             ->setFactory(['Closure', 'fromCallable'])
             ->setArguments([new Reference('bar')]);
         $container->register('bar', 'stdClass');
         $container->register('closure_of_service_closure', 'Closure')
-            ->setPublic('true')
+            ->setPublic(true)
             ->setFactory(['Closure', 'fromCallable'])
             ->setArguments([new ServiceClosureArgument(new Reference('bar2'))]);
         $container->register('bar2', 'stdClass');
@@ -1918,15 +1915,15 @@ PHP
     {
         $container = new ContainerBuilder();
         $container->register('foo', Foo::class)
-            ->setPublic('true');
+            ->setPublic(true);
         $container->register('my_callable', MyCallable::class)
-            ->setPublic('true');
+            ->setPublic(true);
         $container->register('baz', \Closure::class)
             ->setFactory(['Closure', 'fromCallable'])
             ->setArguments(['var_dump'])
-            ->setPublic('true');
+            ->setPublic(true);
         $container->register('bar', LazyClosureConsumer::class)
-            ->setPublic('true')
+            ->setPublic(true)
             ->setAutowired(true);
         $container->compile();
         $dumper = new PhpDumper($container);
@@ -1952,12 +1949,12 @@ PHP
     {
         $container = new ContainerBuilder();
         $container->register('closure1', 'Closure')
-            ->setPublic('true')
+            ->setPublic(true)
             ->setFactory(['Closure', 'fromCallable'])
             ->setLazy(true)
             ->setArguments([[new Reference('foo'), 'cloneFoo']]);
         $container->register('closure2', 'Closure')
-            ->setPublic('true')
+            ->setPublic(true)
             ->setFactory(['Closure', 'fromCallable'])
             ->setLazy(true)
             ->setArguments([[new Reference('foo_void'), '__invoke']]);
@@ -1991,10 +1988,10 @@ PHP
     {
         $container = new ContainerBuilder();
         $container->register('foo', Foo::class)
-            ->setPublic('true');
+            ->setPublic(true);
         $container->setAlias(Foo::class, 'foo');
         $container->register('bar', LazyServiceConsumer::class)
-            ->setPublic('true')
+            ->setPublic(true)
             ->setAutowired(true);
         $container->compile();
         $dumper = new PhpDumper($container);
@@ -2020,7 +2017,7 @@ PHP
     {
         $container = new ContainerBuilder();
         $container->register('foo', AAndIInterfaceConsumer::class)
-            ->setPublic('true')
+            ->setPublic(true)
             ->setAutowired(true);
 
         $container->compile();
@@ -2036,7 +2033,11 @@ PHP
 
         $dumper = new PhpDumper($container);
 
-        $this->assertStringEqualsFile(self::$fixturesPath.'/php/lazy_autowire_attribute_with_intersection.php', $dumper->dump());
+        if (\PHP_VERSION_ID >= 80400) {
+            $this->assertStringEqualsFile(self::$fixturesPath.'/php/lazy_autowire_attribute_with_intersection.php', $dumper->dump());
+        } else {
+            $this->assertStringEqualsFile(self::$fixturesPath.'/php/legacy_lazy_autowire_attribute_with_intersection.php', $dumper->dump());
+        }
     }
 
     public function testCallableAdapterConsumer()
@@ -2044,7 +2045,7 @@ PHP
         $container = new ContainerBuilder();
         $container->register('foo', Foo::class);
         $container->register('bar', CallableAdapterConsumer::class)
-            ->setPublic('true')
+            ->setPublic(true)
             ->setAutowired(true);
         $container->compile();
         $dumper = new PhpDumper($container);
@@ -2109,9 +2110,7 @@ PHP
         $this->assertNotSame($fooService->factoredFromServiceWithParam, $barService->factoredFromServiceWithParam);
     }
 
-    /**
-     * @dataProvider getStripCommentsCodes
-     */
+    #[DataProvider('getStripCommentsCodes')]
     public function testStripComments(string $source, string $expected)
     {
         $reflection = new \ReflectionClass(PhpDumper::class);

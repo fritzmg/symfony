@@ -41,14 +41,14 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
     /**
      * Transforms a number type into localized number.
      *
-     * @param int|float|null $value Number value
+     * @param int|float|string|null $value Number value
      *
      * @throws TransformationFailedException if the given value is not numeric
      *                                       or if the value cannot be transformed
      */
     public function transform(mixed $value): string
     {
-        if (null === $value) {
+        if (null === $value || '' === $value) {
             return '';
         }
 
@@ -185,6 +185,10 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
      */
     private function round(int|float $number): int|float
     {
+        if (\is_int($number)) {
+            return $number;
+        }
+
         if (null !== $this->scale) {
             // shift number to maintain the correct scale during rounding
             $roundingCoef = 10 ** $this->scale;

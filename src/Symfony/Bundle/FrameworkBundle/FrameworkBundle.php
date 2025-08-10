@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle;
 
+use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\AddDebugLogProcessorPass;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\AssetsContextPass;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\ContainerBuilderDebugDumpPass;
@@ -77,6 +78,7 @@ use Symfony\Component\VarExporter\Internal\Hydrator;
 use Symfony\Component\VarExporter\Internal\Registry;
 use Symfony\Component\Workflow\DependencyInjection\WorkflowDebugPass;
 use Symfony\Component\Workflow\DependencyInjection\WorkflowGuardListenerPass;
+use Symfony\Component\Workflow\DependencyInjection\WorkflowValidatorPass;
 
 // Help opcache.preload discover always-needed symbols
 class_exists(ApcuAdapter::class);
@@ -101,8 +103,7 @@ class FrameworkBundle extends Bundle
         $_ENV['DOCTRINE_DEPRECATIONS'] = $_SERVER['DOCTRINE_DEPRECATIONS'] ??= 'trigger';
 
         if (class_exists(SymfonyRuntime::class)) {
-            $handler = set_error_handler('var_dump');
-            restore_error_handler();
+            $handler = get_error_handler();
         } else {
             $handler = [ErrorHandler::register(null, false)];
         }
@@ -173,6 +174,7 @@ class FrameworkBundle extends Bundle
         $container->addCompilerPass(new CachePoolPrunerPass(), PassConfig::TYPE_AFTER_REMOVING);
         $this->addCompilerPassIfExists($container, FormPass::class);
         $this->addCompilerPassIfExists($container, WorkflowGuardListenerPass::class);
+        $this->addCompilerPassIfExists($container, WorkflowValidatorPass::class);
         $container->addCompilerPass(new ResettableServicePass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, -32);
         $container->addCompilerPass(new RegisterLocaleAwareServicesPass());
         $container->addCompilerPass(new TestServiceContainerWeakRefPass(), PassConfig::TYPE_BEFORE_REMOVING, -32);
@@ -198,6 +200,14 @@ class FrameworkBundle extends Bundle
             $container->addCompilerPass(new CacheCollectorPass(), PassConfig::TYPE_BEFORE_REMOVING);
             $this->addCompilerPassIfExists($container, WorkflowDebugPass::class);
         }
+    }
+
+    /**
+     * @internal
+     */
+    public static function considerProfilerEnabled(): bool
+    {
+        return !($GLOBALS['app'] ?? null) instanceof Application || empty($_GET) && \in_array('--profile', $_SERVER['argv'] ?? [], true);
     }
 
     private function addCompilerPassIfExists(ContainerBuilder $container, string $class, string $type = PassConfig::TYPE_BEFORE_OPTIMIZATION, int $priority = 0): void

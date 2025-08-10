@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\Validator\Tests\Constraints;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use Symfony\Component\Validator\Constraints\Type;
 use Symfony\Component\Validator\Constraints\TypeValidator;
 use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
@@ -58,9 +61,7 @@ class TypeValidatorTest extends ConstraintValidatorTestCase
             ->assertRaised();
     }
 
-    /**
-     * @dataProvider getValidValues
-     */
+    #[DataProvider('getValidValues')]
     public function testValidValues($value, $type)
     {
         $constraint = new Type(type: $type);
@@ -118,9 +119,7 @@ class TypeValidatorTest extends ConstraintValidatorTestCase
         ];
     }
 
-    /**
-     * @dataProvider getInvalidValues
-     */
+    #[DataProvider('getInvalidValues')]
     public function testInvalidValues($value, $type, $valueAsString)
     {
         $constraint = new Type(
@@ -190,9 +189,7 @@ class TypeValidatorTest extends ConstraintValidatorTestCase
         ];
     }
 
-    /**
-     * @dataProvider getValidValuesMultipleTypes
-     */
+    #[DataProvider('getValidValuesMultipleTypes')]
     public function testValidValuesMultipleTypes($value, array $types)
     {
         $constraint = new Type(type: $types);
@@ -221,9 +218,8 @@ class TypeValidatorTest extends ConstraintValidatorTestCase
             ->assertRaised();
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testInvalidValuesMultipleTypesDoctrineStyle()
     {
         $this->validator->validate('12345', new Type([

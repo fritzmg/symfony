@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Form\Tests\Command;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
@@ -186,15 +187,17 @@ TXT
             , $tester->getDisplay(true));
     }
 
-    /**
-     * @dataProvider provideCompletionSuggestions
-     */
+    #[DataProvider('provideCompletionSuggestions')]
     public function testComplete(array $input, array $expectedSuggestions)
     {
         $formRegistry = new FormRegistry([], new ResolvedFormTypeFactory());
         $command = new DebugCommand($formRegistry);
         $application = new Application();
-        $application->add($command);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
         $tester = new CommandCompletionTester($application->get('debug:form'));
         $this->assertSame($expectedSuggestions, $tester->complete($input));
     }
@@ -278,7 +281,11 @@ TXT
         $formRegistry = new FormRegistry([], new ResolvedFormTypeFactory());
         $command = new DebugCommand($formRegistry, $namespaces, $types);
         $application = new Application();
-        $application->add($command);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
 
         return new CommandTester($application->find('debug:form'));
     }

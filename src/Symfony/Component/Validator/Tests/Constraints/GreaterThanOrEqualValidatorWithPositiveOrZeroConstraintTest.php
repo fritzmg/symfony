@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\Validator\Tests\Constraints;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqualValidator;
 use Symfony\Component\Validator\Constraints\PositiveOrZero;
@@ -61,9 +64,8 @@ class GreaterThanOrEqualValidatorWithPositiveOrZeroConstraintTest extends Abstra
         ];
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testThrowsConstraintExceptionIfPropertyPath()
     {
         $this->expectException(ConstraintDefinitionException::class);
@@ -72,9 +74,8 @@ class GreaterThanOrEqualValidatorWithPositiveOrZeroConstraintTest extends Abstra
         return new PositiveOrZero(['propertyPath' => 'field']);
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testThrowsConstraintExceptionIfValue()
     {
         $this->expectException(ConstraintDefinitionException::class);
@@ -83,9 +84,7 @@ class GreaterThanOrEqualValidatorWithPositiveOrZeroConstraintTest extends Abstra
         return new PositiveOrZero(['value' => 0]);
     }
 
-    /**
-     * @dataProvider provideInvalidConstraintOptions
-     */
+    #[DataProvider('provideInvalidConstraintOptions')]
     public function testThrowsConstraintExceptionIfNoValueOrPropertyPath($options)
     {
         $this->markTestSkipped('Value option always set for PositiveOrZero constraint');
@@ -101,9 +100,7 @@ class GreaterThanOrEqualValidatorWithPositiveOrZeroConstraintTest extends Abstra
         $this->markTestSkipped('PropertyPath option is not used in PositiveOrZero constraint');
     }
 
-    /**
-     * @dataProvider provideValidComparisonsToPropertyPath
-     */
+    #[DataProvider('provideValidComparisonsToPropertyPath')]
     public function testValidComparisonToPropertyPath($comparedValue)
     {
         $this->markTestSkipped('PropertyPath option is not used in PositiveOrZero constraint');

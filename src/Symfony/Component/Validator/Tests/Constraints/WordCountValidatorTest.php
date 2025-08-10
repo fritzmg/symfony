@@ -11,15 +11,15 @@
 
 namespace Symfony\Component\Validator\Tests\Constraints;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Symfony\Component\Validator\Constraints\WordCount;
 use Symfony\Component\Validator\Constraints\WordCountValidator;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
 use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
 use Symfony\Component\Validator\Tests\Constraints\Fixtures\StringableValue;
 
-/**
- * @requires extension intl
- */
+#[RequiresPhpExtension('intl')]
 class WordCountValidatorTest extends ConstraintValidatorTestCase
 {
     protected function createValidator(): WordCountValidator
@@ -27,9 +27,7 @@ class WordCountValidatorTest extends ConstraintValidatorTestCase
         return new WordCountValidator();
     }
 
-    /**
-     * @dataProvider provideValidValues
-     */
+    #[DataProvider('provideValidValues')]
     public function testValidWordCount(string|\Stringable|null $value, int $expectedWordCount)
     {
         $this->validator->validate($value, new WordCount(min: $expectedWordCount, max: $expectedWordCount));
@@ -63,9 +61,7 @@ class WordCountValidatorTest extends ConstraintValidatorTestCase
             ->assertRaised();
     }
 
-    /**
-     * @dataProvider provideInvalidTypes
-     */
+    #[DataProvider('provideInvalidTypes')]
     public function testNonStringValues(mixed $value)
     {
         $this->expectException(UnexpectedValueException::class);
@@ -83,6 +79,7 @@ class WordCountValidatorTest extends ConstraintValidatorTestCase
         yield [new StringableValue('my ûtf 8'), 3];
         yield [null, 1]; // null should always pass and eventually be handled by NotNullValidator
         yield ['', 1]; // empty string should always pass and eventually be handled by NotBlankValidator
+        yield ['My String 0', 3];
     }
 
     public static function provideInvalidTypes()

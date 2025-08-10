@@ -30,6 +30,7 @@ use Symfony\Component\HttpClient\Internal\AmpClientStateV5;
 use Symfony\Component\HttpClient\Internal\Canary;
 use Symfony\Component\HttpClient\Internal\ClientState;
 use Symfony\Contracts\HttpClient\ResponseInterface;
+
 use function Amp\delay;
 use function Amp\Future\awaitFirst;
 
@@ -239,6 +240,10 @@ final class AmpResponseV5 implements ResponseInterface, StreamableInterface
             $body = $response->getBody();
 
             while (true) {
+                if (!isset($multi->openHandles[$id])) {
+                    return;
+                }
+
                 $multi->openHandles[$id]->complete();
                 $multi->openHandles[$id] = new DeferredFuture();
 

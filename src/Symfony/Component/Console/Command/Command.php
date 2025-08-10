@@ -32,7 +32,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class Command
+class Command implements SignalableCommandInterface
 {
     // see https://tldp.org/LDP/abs/html/exitcodes.html
     public const SUCCESS = 0;
@@ -87,9 +87,30 @@ class Command
      *
      * @throws LogicException When the command name is empty
      */
-    public function __construct(?string $name = null)
+    public function __construct(?string $name = null, ?callable $code = null)
     {
         $this->definition = new InputDefinition();
+
+        if (null !== $code) {
+            if (!\is_object($code) || $code instanceof \Closure) {
+                throw new InvalidArgumentException(\sprintf('The command must be an instance of "%s" or an invokable object.', self::class));
+            }
+
+            /** @var AsCommand $attribute */
+            $attribute = ((new \ReflectionObject($code))->getAttributes(AsCommand::class)[0] ?? null)?->newInstance()
+                ?? throw new LogicException(\sprintf('The command must use the "%s" attribute.', AsCommand::class));
+
+            $this->setName($name ?? $attribute->name)
+                ->setDescription($attribute->description ?? '')
+                ->setHelp($attribute->help ?? '')
+                ->setCode($code);
+
+            foreach ($attribute->usages as $usage) {
+                $this->addUsage($usage);
+            }
+
+            return;
+        }
 
         $attribute = ((new \ReflectionClass(static::class))->getAttributes(AsCommand::class)[0] ?? null)?->newInstance();
 
@@ -97,13 +118,13 @@ class Command
             if (self::class !== (new \ReflectionMethod($this, 'getDefaultName'))->class) {
                 trigger_deprecation('symfony/console', '7.3', 'Overriding "Command::getDefaultName()" in "%s" is deprecated and will be removed in Symfony 8.0, use the #[AsCommand] attribute instead.', static::class);
 
-                $defaultName = static::getDefaultName();
+                $name = static::getDefaultName();
             } else {
-                $defaultName = $attribute?->name;
+                $name = $attribute?->name;
             }
         }
 
-        if (null === $name && null !== $name = $defaultName) {
+        if (null !== $name) {
             $aliases = explode('|', $name);
 
             if ('' === $name = array_shift($aliases)) {
@@ -134,7 +155,11 @@ class Command
             $this->setHelp($attribute?->help ?? '');
         }
 
-        if (\is_callable($this)) {
+        foreach ($attribute?->usages ?? [] as $usage) {
+            $this->addUsage($usage);
+        }
+
+        if (\is_callable($this) && self::class === (new \ReflectionMethod($this, 'execute'))->getDeclaringClass()->name) {
             $this->code = new InvokableCommand($this, $this(...));
         }
 
@@ -347,7 +372,7 @@ class Command
      */
     public function setCode(callable $code): static
     {
-        $this->code = new InvokableCommand($this, $code, triggerDeprecations: true);
+        $this->code = new InvokableCommand($this, $code);
 
         return $this;
     }
@@ -672,6 +697,16 @@ class Command
         }
 
         return $this->helperSet->get($name);
+    }
+
+    public function getSubscribedSignals(): array
+    {
+        return $this->code?->getSubscribedSignals() ?? [];
+    }
+
+    public function handleSignal(int $signal, int|false $previousExitCode = 0): int|false
+    {
+        return $this->code?->handleSignal($signal, $previousExitCode) ?? false;
     }
 
     /**

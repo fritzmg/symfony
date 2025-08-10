@@ -11,7 +11,10 @@
 
 namespace Symfony\Component\Messenger\Tests\Command;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LoggerTrait;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\InvalidOptionException;
 use Symfony\Component\Console\Tester\CommandCompletionTester;
@@ -59,7 +62,11 @@ class ConsumeMessagesCommandTest extends TestCase
         $command = new ConsumeMessagesCommand(new RoutableMessageBus($busLocator), $receiverLocator, new EventDispatcher());
 
         $application = new Application();
-        $application->add($command);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
         $tester = new CommandTester($application->get('messenger:consume'));
         $tester->execute([
             'receivers' => ['dummy-receiver'],
@@ -89,7 +96,11 @@ class ConsumeMessagesCommandTest extends TestCase
         $command = new ConsumeMessagesCommand(new RoutableMessageBus($busLocator), $receiverLocator, new EventDispatcher());
 
         $application = new Application();
-        $application->add($command);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
         $tester = new CommandTester($application->get('messenger:consume'));
         $tester->execute([
             'receivers' => ['dummy-receiver'],
@@ -107,9 +118,7 @@ class ConsumeMessagesCommandTest extends TestCase
         yield [false];
     }
 
-    /**
-     * @dataProvider provideRunWithResetServicesOption
-     */
+    #[DataProvider('provideRunWithResetServicesOption')]
     public function testRunWithResetServicesOption(bool $shouldReset)
     {
         $envelope = new Envelope(new \stdClass());
@@ -132,7 +141,11 @@ class ConsumeMessagesCommandTest extends TestCase
         $command = new ConsumeMessagesCommand($bus, $receiverLocator, new EventDispatcher(), null, [], new ResetServicesListener($servicesResetter));
 
         $application = new Application();
-        $application->add($command);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
         $tester = new CommandTester($application->get('messenger:consume'));
         $tester->execute(array_merge([
             'receivers' => ['dummy-receiver'],
@@ -145,9 +158,7 @@ class ConsumeMessagesCommandTest extends TestCase
         $this->assertStringContainsString('[OK] Consuming messages from transport "dummy-receiver"', $tester->getDisplay());
     }
 
-    /**
-     * @dataProvider getInvalidOptions
-     */
+    #[DataProvider('getInvalidOptions')]
     public function testRunWithInvalidOption(string $option, string $value, string $expectedMessage)
     {
         $receiverLocator = new Container();
@@ -156,7 +167,11 @@ class ConsumeMessagesCommandTest extends TestCase
         $command = new ConsumeMessagesCommand(new RoutableMessageBus(new Container()), $receiverLocator, new EventDispatcher());
 
         $application = new Application();
-        $application->add($command);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
         $tester = new CommandTester($application->get('messenger:consume'));
 
         $this->expectException(InvalidOptionException::class);
@@ -194,7 +209,11 @@ class ConsumeMessagesCommandTest extends TestCase
         $command = new ConsumeMessagesCommand(new RoutableMessageBus($busLocator), $receiverLocator, new EventDispatcher());
 
         $application = new Application();
-        $application->add($command);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
         $tester = new CommandTester($application->get('messenger:consume'));
         $tester->execute([
             'receivers' => ['dummy-receiver'],
@@ -203,6 +222,52 @@ class ConsumeMessagesCommandTest extends TestCase
 
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertStringContainsString('[OK] Consuming messages from transport "dummy-receiver"', $tester->getDisplay());
+    }
+
+    public function testRunWithMemoryLimit()
+    {
+        $envelope = new Envelope(new \stdClass(), [new BusNameStamp('dummy-bus')]);
+
+        $receiver = $this->createMock(ReceiverInterface::class);
+        $receiver->method('get')->willReturn([$envelope]);
+
+        $receiverLocator = new Container();
+        $receiverLocator->set('dummy-receiver', $receiver);
+
+        $bus = $this->createMock(MessageBusInterface::class);
+
+        $busLocator = new Container();
+        $busLocator->set('dummy-bus', $bus);
+
+        $logger = new class implements LoggerInterface {
+            use LoggerTrait;
+
+            public array $logs = [];
+
+            public function log(...$args): void
+            {
+                $this->logs[] = $args;
+            }
+        };
+        $command = new ConsumeMessagesCommand(new RoutableMessageBus($busLocator), $receiverLocator, new EventDispatcher(), $logger);
+
+        $application = new Application();
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
+        $tester = new CommandTester($application->get('messenger:consume'));
+        $tester->execute([
+            'receivers' => ['dummy-receiver'],
+            '--memory-limit' => '1.5M',
+        ]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('[OK] Consuming messages from transport "dummy-receiver"', $tester->getDisplay());
+        $this->assertStringContainsString('The worker will automatically exit once it has exceeded 1.5M of memory', $tester->getDisplay());
+
+        $this->assertSame(1572864, $logger->logs[1][2]['limit']);
     }
 
     public function testRunWithAllOption()
@@ -232,7 +297,11 @@ class ConsumeMessagesCommandTest extends TestCase
         );
 
         $application = new Application();
-        $application->add($command);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
         $tester = new CommandTester($application->get('messenger:consume'));
         $tester->execute([
             '--all' => true,
@@ -243,9 +312,7 @@ class ConsumeMessagesCommandTest extends TestCase
         $this->assertStringContainsString('[OK] Consuming messages from transports "dummy-receiver1, dummy-receiver2"', $tester->getDisplay());
     }
 
-    /**
-     * @dataProvider provideCompletionSuggestions
-     */
+    #[DataProvider('provideCompletionSuggestions')]
     public function testComplete(array $input, array $expectedSuggestions)
     {
         $bus = $this->createMock(RoutableMessageBus::class);

@@ -20,6 +20,7 @@ use AsyncAws\Sqs\Result\ReceiveMessageResult;
 use AsyncAws\Sqs\SqsClient;
 use AsyncAws\Sqs\ValueObject\Message;
 use Composer\InstalledVersions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -285,9 +286,7 @@ class ConnectionTest extends TestCase
         $connection->get();
     }
 
-    /**
-     * @dataProvider provideQueueUrl
-     */
+    #[DataProvider('provideQueueUrl')]
     public function testInjectQueueUrl(string $dsn, string $queueUrl)
     {
         $connection = Connection::fromDsn($dsn);
@@ -305,9 +304,7 @@ class ConnectionTest extends TestCase
         yield ['https://sqs.us-east-2.amazonaws.com/123456/queue?auto_setup=1', 'https://sqs.us-east-2.amazonaws.com/123456/queue'];
     }
 
-    /**
-     * @dataProvider provideNotQueueUrl
-     */
+    #[DataProvider('provideNotQueueUrl')]
     public function testNotInjectQueueUrl(string $dsn)
     {
         $connection = Connection::fromDsn($dsn);
@@ -373,6 +370,35 @@ class ConnectionTest extends TestCase
 
         $connection = new Connection(['visibility_timeout' => $visibilityTimeout], $client, $queueUrl);
         $connection->keepalive($id);
+    }
+
+    public function testDeleteOnReject()
+    {
+        $expectedParams = [
+            'QueueUrl' => $queueUrl = 'https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue',
+            'ReceiptHandle' => $id = 'abc',
+        ];
+
+        $client = $this->createMock(SqsClient::class);
+        $client->expects($this->once())->method('deleteMessage')->with($expectedParams);
+
+        $connection = new Connection([], $client, $queueUrl);
+        $connection->reject($id);
+    }
+
+    public function testDoNotDeleteOnRejection()
+    {
+        $expectedParams = [
+            'QueueUrl' => $queueUrl = 'https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue',
+            'ReceiptHandle' => $id = 'abc',
+            'VisibilityTimeout' => $visibilityTimeout = 10,
+        ];
+
+        $client = $this->createMock(SqsClient::class);
+        $client->expects($this->once())->method('changeMessageVisibility')->with($expectedParams);
+
+        $connection = new Connection(['delete_on_rejection' => false, 'visibility_timeout' => $visibilityTimeout], $client, $queueUrl);
+        $connection->reject($id);
     }
 
     public function testKeepaliveWithTooSmallTtl()

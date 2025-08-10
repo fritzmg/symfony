@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Config\Tests\Resource;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Resource\ReflectionClassResource;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -60,9 +61,7 @@ class ReflectionClassResourceTest extends TestCase
         $this->assertFalse($res->isFresh($now), '->isFresh() returns false if the resource does not exist');
     }
 
-    /**
-     * @dataProvider provideHashedSignature
-     */
+    #[DataProvider('provideHashedSignature')]
     public function testHashedSignature(bool $changeExpected, int $changedLine, ?string $changedCode, int $resourceClassNameSuffix, ?\Closure $setContext = null)
     {
         if ($setContext) {
@@ -195,6 +194,30 @@ EOPHP;
         TestServiceWithStaticProperty::$initializedObject = new TestServiceWithStaticProperty();
         $this->assertTrue($res->isFresh(0));
     }
+
+    public function testEnum()
+    {
+        $res = new ReflectionClassResource($enum = new \ReflectionClass(SomeEnum::class));
+        $r = new \ReflectionClass(ReflectionClassResource::class);
+        $generateSignature = $r->getMethod('generateSignature')->getClosure($res);
+        $actual = implode("\n", iterator_to_array($generateSignature($enum)));
+        $this->assertStringContainsString('UnitEnum', $actual);
+        $this->assertStringContainsString('TestAttribute', $actual);
+        $this->assertStringContainsString('Beta', $actual);
+    }
+
+    public function testBackedEnum()
+    {
+        $res = new ReflectionClassResource($enum = new \ReflectionClass(SomeBackedEnum::class));
+        $r = new \ReflectionClass(ReflectionClassResource::class);
+        $generateSignature = $r->getMethod('generateSignature')->getClosure($res);
+        $actual = implode("\n", iterator_to_array($generateSignature($enum)));
+        $this->assertStringContainsString('UnitEnum', $actual);
+        $this->assertStringContainsString('BackedEnum', $actual);
+        $this->assertStringContainsString('TestAttribute', $actual);
+        $this->assertStringContainsString('Beta', $actual);
+        $this->assertStringContainsString('beta', $actual);
+    }
 }
 
 interface DummyInterface
@@ -224,4 +247,20 @@ class TestServiceSubscriber implements ServiceSubscriberInterface
 class TestServiceWithStaticProperty
 {
     public static object $initializedObject;
+}
+
+enum SomeEnum
+{
+    case Alpha;
+
+    #[TestAttribute]
+    case Beta;
+}
+
+enum SomeBackedEnum: string
+{
+    case Alpha = 'alpha';
+
+    #[TestAttribute]
+    case Beta = 'beta';
 }

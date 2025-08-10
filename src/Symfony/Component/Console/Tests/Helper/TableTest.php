@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Console\Tests\Helper;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\RuntimeException;
@@ -38,9 +39,7 @@ class TableTest extends TestCase
         unset($this->stream);
     }
 
-    /**
-     * @dataProvider renderProvider
-     */
+    #[DataProvider('renderProvider')]
     public function testRender($headers, $rows, $style, $expected, $decorated = false)
     {
         $table = new Table($output = $this->getOutputStream($decorated));
@@ -54,9 +53,7 @@ class TableTest extends TestCase
         $this->assertEquals($expected, $this->getOutputContent($output));
     }
 
-    /**
-     * @dataProvider renderProvider
-     */
+    #[DataProvider('renderProvider')]
     public function testRenderAddRows($headers, $rows, $style, $expected, $decorated = false)
     {
         $table = new Table($output = $this->getOutputStream($decorated));
@@ -70,9 +67,7 @@ class TableTest extends TestCase
         $this->assertEquals($expected, $this->getOutputContent($output));
     }
 
-    /**
-     * @dataProvider renderProvider
-     */
+    #[DataProvider('renderProvider')]
     public function testRenderAddRowsOneByOne($headers, $rows, $style, $expected, $decorated = false)
     {
         $table = new Table($output = $this->getOutputStream($decorated));
@@ -1260,9 +1255,7 @@ TABLE;
         Table::getStyleDefinition('absent');
     }
 
-    /**
-     * @dataProvider renderSetTitle
-     */
+    #[DataProvider('renderSetTitle')]
     public function testSetTitle($headerTitle, $footerTitle, $style, $expected)
     {
         (new Table($output = $this->getOutputStream()))
@@ -1308,9 +1301,9 @@ TABLE
                 'footer',
                 'default',
                 <<<'TABLE'
-+---------------+---- Multiline
++---------------+--- Multiline
 header
-here -+------------------+
+here +------------------+
 | ISBN          | Title                    | Author           |
 +---------------+--------------------------+------------------+
 | 99921-58-10-7 | Divine Comedy            | Dante Alighieri  |
@@ -1536,9 +1529,7 @@ EOTXT;
         yield [$headers, $rows, $expected];
     }
 
-    /**
-     * @dataProvider provideRenderHorizontalTests
-     */
+    #[DataProvider('provideRenderHorizontalTests')]
     public function testRenderHorizontal(array $headers, array $rows, string $expected)
     {
         $table = new Table($output = $this->getOutputStream());
@@ -1590,17 +1581,17 @@ EOTXT;
         $expected =
             <<<TABLE
 +-----------------+-----------------+-----------------+
-| Lorem ipsum dolor sit amet, consectetur adipi       |
-| scing elit, sed do eiusmod tempor                   |
+| Lorem ipsum dolor sit amet, consectetur adipiscing  |
+| elit, sed do eiusmod tempor                         |
 +-----------------+-----------------+-----------------+
-| Lorem ipsum dolor sit amet, consectetur             |
-| adipiscing elit, sed do eiusmod tempor              |
+| Lorem ipsum dolor sit amet, consectetur adipiscing  |
+| elit, sed do eiusmod tempor                         |
 +-----------------+-----------------+-----------------+
-| Lorem ipsum dolor sit amet, co    | hello world     |
-| nsectetur                         |                 |
+| Lorem ipsum dolor sit amet, conse | hello world     |
+| ctetur                            |                 |
 +-----------------+-----------------+-----------------+
-| hello world     | Lorem ipsum dolor sit amet, co    |
-|                 | nsectetur adipiscing elit         |
+| hello world     | Lorem ipsum dolor sit amet, conse |
+|                 | ctetur adipiscing elit            |
 +-----------------+-----------------+-----------------+
 | hello           | world           | Lorem ipsum     |
 |                 |                 | dolor sit amet, |
@@ -1984,9 +1975,7 @@ EOTXT
         ];
     }
 
-    /**
-     * @dataProvider provideRenderVerticalTests
-     */
+    #[DataProvider('provideRenderVerticalTests')]
     public function testVerticalRender(string $expectedOutput, array $headers, array $rows, string $style = 'default', string $headerTitle = '', string $footerTitle = '')
     {
         $table = new Table($output = $this->getOutputStream());
@@ -2089,6 +2078,38 @@ TABLE
 └───────┴───────┘
 
 TABLE,
+            $this->getOutputContent($output)
+        );
+    }
+
+    public function testGithubIssue60038WidthOfCellWithEmoji()
+    {
+        $table = (new Table($output = $this->getOutputStream()))
+            ->setHeaderTitle('Test Title')
+            ->setHeaders(['Title', 'Author'])
+            ->setRows([
+                ['🎭 💫 ☯ Divine Comedy', 'Dante Alighieri'],
+                // the snowflake (e2 9d 84 ef b8 8f) has a variant selector
+                ['👑 ❄️  🗡 Game of Thrones', 'George R.R. Martin'],
+                // the snowflake in text style (e2 9d 84 ef b8 8e) has a variant selector
+                ['❄︎❄︎❄︎ snowflake in text style ❄︎❄︎❄︎', ''],
+                ['And a very long line to show difference in previous lines', ''],
+            ])
+        ;
+        $table->render();
+
+        $this->assertSame(<<<TABLE
++---------------------------------- Test Title -------------+--------------------+
+| Title                                                     | Author             |
++-----------------------------------------------------------+--------------------+
+| 🎭 💫 ☯ Divine Comedy                                     | Dante Alighieri    |
+| 👑 ❄️  🗡 Game of Thrones                                   | George R.R. Martin |
+| ❄︎❄︎❄︎ snowflake in text style ❄︎❄︎❄︎                           |                    |
+| And a very long line to show difference in previous lines |                    |
++-----------------------------------------------------------+--------------------+
+
+TABLE
+            ,
             $this->getOutputContent($output)
         );
     }

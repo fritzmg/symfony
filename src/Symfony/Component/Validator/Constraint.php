@@ -110,6 +110,17 @@ abstract class Constraint
     {
         unset($this->groups); // enable lazy initialization
 
+        if (null === $options && (\func_num_args() > 0 || self::class === (new \ReflectionMethod($this, 'getRequiredOptions'))->getDeclaringClass()->getName())) {
+            if (null !== $groups) {
+                $this->groups = $groups;
+            }
+            $this->payload = $payload;
+
+            return;
+        }
+
+        trigger_deprecation('symfony/validator', '7.4', 'Support for evaluating options in the base Constraint class is deprecated. Initialize properties in the constructor of %s instead.', static::class);
+
         $options = $this->normalizeOptions($options);
         if (null !== $groups) {
             $options['groups'] = $groups;
@@ -122,14 +133,16 @@ abstract class Constraint
     }
 
     /**
+     * @deprecated since Symfony 7.4
+     *
      * @return array<string, mixed>
      */
     protected function normalizeOptions(mixed $options): array
     {
         $normalizedOptions = [];
-        $defaultOption = $this->getDefaultOption();
+        $defaultOption = $this->getDefaultOption(false);
         $invalidOptions = [];
-        $missingOptions = array_flip($this->getRequiredOptions());
+        $missingOptions = array_flip($this->getRequiredOptions(false));
         $knownOptions = get_class_vars(static::class);
 
         if (\is_array($options) && isset($options['value']) && !property_exists($this, 'value')) {
@@ -241,10 +254,15 @@ abstract class Constraint
      *
      * Override this method to define a default option.
      *
+     * @deprecated since Symfony 7.4
      * @see __construct()
      */
     public function getDefaultOption(): ?string
     {
+        if (0 === \func_num_args() || func_get_arg(0)) {
+            trigger_deprecation('symfony/validator', '7.4', 'The %s() method is deprecated.', __METHOD__);
+        }
+
         return null;
     }
 
@@ -255,10 +273,15 @@ abstract class Constraint
      *
      * @return string[]
      *
+     * @deprecated since Symfony 7.4
      * @see __construct()
      */
     public function getRequiredOptions(): array
     {
+        if (0 === \func_num_args() || func_get_arg(0)) {
+            trigger_deprecation('symfony/validator', '7.4', 'The %s() method is deprecated.', __METHOD__);
+        }
+
         return [];
     }
 

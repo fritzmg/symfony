@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\VarDumper\Tests\Caster;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use RdKafka\Conf;
 use RdKafka\KafkaConsumer;
@@ -18,11 +20,8 @@ use RdKafka\Producer;
 use RdKafka\TopicConf;
 use Symfony\Component\VarDumper\Test\VarDumperTestTrait;
 
-/**
- * @requires extension rdkafka
- *
- * @group integration
- */
+#[RequiresPhpExtension('rdkafka')]
+#[Group('integration')]
 class RdKafkaCasterTest extends TestCase
 {
     use VarDumperTestTrait;
@@ -61,6 +60,7 @@ RdKafka\Conf {
   client.id: "rdkafka"
 %A
   dr_msg_cb: "0x%x"
+%A
 }
 EODUMP;
 
@@ -114,7 +114,7 @@ EODUMP;
         $expectedDump = <<<EODUMP
 RdKafka\TopicConf {
   request.required.acks: "%i"
-  request.timeout.ms: "5000"
+  request.timeout.ms: "%d"
   message.timeout.ms: "300000"
 %A
   auto.commit.enable: "true"

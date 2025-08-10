@@ -11,6 +11,8 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\Functional;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Tests\Fixtures\BackslashClass;
 use Symfony\Bundle\FrameworkBundle\Tests\Fixtures\ContainerExcluded;
@@ -18,9 +20,7 @@ use Symfony\Component\Console\Tester\ApplicationTester;
 use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
-/**
- * @group functional
- */
+#[Group('functional')]
 class ContainerDebugCommandTest extends AbstractWebTestCase
 {
     public function testDumpContainerIfNotExists()
@@ -53,7 +53,7 @@ class ContainerDebugCommandTest extends AbstractWebTestCase
 
     public function testNoDumpedXML()
     {
-        static::bootKernel(['test_case' => 'ContainerDebug', 'root_config' => 'config.yml', 'debug' => true, 'debug.container.dump' => false]);
+        static::bootKernel(['test_case' => 'ContainerDebug', 'root_config' => 'no_dump.yml', 'debug' => true]);
 
         $application = new Application(static::$kernel);
         $application->setAutoExit(false);
@@ -113,9 +113,7 @@ class ContainerDebugCommandTest extends AbstractWebTestCase
         $this->assertStringNotContainsString(ContainerExcluded::class, $tester->getDisplay());
     }
 
-    /**
-     * @dataProvider provideIgnoreBackslashWhenFindingService
-     */
+    #[DataProvider('provideIgnoreBackslashWhenFindingService')]
     public function testIgnoreBackslashWhenFindingService(string $validServiceId)
     {
         static::bootKernel(['test_case' => 'ContainerDebug', 'root_config' => 'config.yml']);
@@ -214,10 +212,10 @@ TXT
         file_put_contents($path, serialize([[
             'type' => 16384,
             'message' => 'The "Symfony\Bundle\FrameworkBundle\Controller\Controller" class is deprecated since Symfony 4.2, use Symfony\Bundle\FrameworkBundle\Controller\AbstractController instead.',
-            'file' => '/home/hamza/projet/contrib/sf/vendor/symfony/framework-bundle/Controller/Controller.php',
+            'file' => '/home/hamza/project/contrib/sf/vendor/symfony/framework-bundle/Controller/Controller.php',
             'line' => 17,
             'trace' => [[
-                'file' => '/home/hamza/projet/contrib/sf/src/Controller/DefaultController.php',
+                'file' => '/home/hamza/project/contrib/sf/src/Controller/DefaultController.php',
                 'line' => 9,
                 'function' => 'spl_autoload_call',
             ]],
@@ -233,7 +231,7 @@ TXT
 
         $tester->assertCommandIsSuccessful();
         $this->assertStringContainsString('Symfony\Bundle\FrameworkBundle\Controller\Controller', $tester->getDisplay());
-        $this->assertStringContainsString('/home/hamza/projet/contrib/sf/vendor/symfony/framework-bundle/Controller/Controller.php', $tester->getDisplay());
+        $this->assertStringContainsString('/home/hamza/project/contrib/sf/vendor/symfony/framework-bundle/Controller/Controller.php', $tester->getDisplay());
     }
 
     public function testGetDeprecationNone()
@@ -282,9 +280,7 @@ TXT
         ];
     }
 
-    /**
-     * @dataProvider provideCompletionSuggestions
-     */
+    #[DataProvider('provideCompletionSuggestions')]
     public function testComplete(array $input, array $expectedSuggestions, array $notExpectedSuggestions = [])
     {
         static::bootKernel(['test_case' => 'ContainerDebug', 'root_config' => 'config.yml', 'debug' => true]);

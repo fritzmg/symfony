@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Form\Tests\Extension\Core\Type;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use Symfony\Component\Clock\DatePoint;
 use Symfony\Component\Form\ChoiceList\View\ChoiceView;
 use Symfony\Component\Form\Exception\InvalidConfigurationException;
 use Symfony\Component\Form\Exception\LogicException;
@@ -42,6 +44,32 @@ class TimeTypeTest extends BaseTypeTestCase
         $dateTime = new \DateTime('1970-01-01 03:04:00 UTC');
 
         $this->assertEquals($dateTime, $form->getData());
+        $this->assertEquals($input, $form->getViewData());
+    }
+
+    public function testSubmitDatePoint()
+    {
+        if (!class_exists(DatePoint::class)) {
+            self::markTestSkipped('The DatePoint class is not available.');
+        }
+
+        $form = $this->factory->create(static::TESTED_TYPE, null, [
+            'model_timezone' => 'UTC',
+            'view_timezone' => 'UTC',
+            'widget' => 'choice',
+            'input' => 'date_point',
+        ]);
+
+        $input = [
+            'hour' => '3',
+            'minute' => '4',
+        ];
+
+        $form->submit($input);
+
+        $this->assertInstanceOf(DatePoint::class, $form->getData());
+        $datePoint = DatePoint::createFromMutable(new \DateTime('1970-01-01 03:04:00 UTC'));
+        $this->assertEquals($datePoint, $form->getData());
         $this->assertEquals($input, $form->getViewData());
     }
 
@@ -907,9 +935,7 @@ class TimeTypeTest extends BaseTypeTestCase
         ];
     }
 
-    /**
-     * @dataProvider provideCompoundWidgets
-     */
+    #[DataProvider('provideCompoundWidgets')]
     public function testHourErrorsBubbleUp($widget)
     {
         $error = new FormError('Invalid!');
@@ -922,9 +948,7 @@ class TimeTypeTest extends BaseTypeTestCase
         $this->assertSame([$error], iterator_to_array($form->getErrors()));
     }
 
-    /**
-     * @dataProvider provideCompoundWidgets
-     */
+    #[DataProvider('provideCompoundWidgets')]
     public function testMinuteErrorsBubbleUp($widget)
     {
         $error = new FormError('Invalid!');
@@ -937,9 +961,7 @@ class TimeTypeTest extends BaseTypeTestCase
         $this->assertSame([$error], iterator_to_array($form->getErrors()));
     }
 
-    /**
-     * @dataProvider provideCompoundWidgets
-     */
+    #[DataProvider('provideCompoundWidgets')]
     public function testSecondErrorsBubbleUp($widget)
     {
         $error = new FormError('Invalid!');
@@ -1128,9 +1150,7 @@ class TimeTypeTest extends BaseTypeTestCase
         ], $form->getViewData());
     }
 
-    /**
-     * @dataProvider provideEmptyData
-     */
+    #[DataProvider('provideEmptyData')]
     public function testSubmitNullUsesDateEmptyData($widget, $emptyData, $expectedData)
     {
         $form = $this->factory->create(static::TESTED_TYPE, null, [

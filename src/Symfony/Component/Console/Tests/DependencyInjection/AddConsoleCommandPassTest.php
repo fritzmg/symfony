@@ -11,10 +11,12 @@
 
 namespace Symfony\Component\Console\Tests\DependencyInjection;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Command\LazyCommand;
+use Symfony\Component\Console\Command\SignalableCommandInterface;
 use Symfony\Component\Console\CommandLoader\ContainerCommandLoader;
 use Symfony\Component\Console\DependencyInjection\AddConsoleCommandPass;
 use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
@@ -27,9 +29,7 @@ use Symfony\Component\DependencyInjection\TypedReference;
 
 class AddConsoleCommandPassTest extends TestCase
 {
-    /**
-     * @dataProvider visibilityProvider
-     */
+    #[DataProvider('visibilityProvider')]
     public function testProcess($public)
     {
         $container = new ContainerBuilder();
@@ -314,6 +314,7 @@ class AddConsoleCommandPassTest extends TestCase
         $definition->addTag('console.command', [
             'command' => 'invokable',
             'description' => 'The command description',
+            'usages' => ['usage1', 'usage2'],
             'help' => 'The %command.name% command help content.',
         ]);
         $container->setDefinition('invokable_command', $definition);
@@ -322,6 +323,29 @@ class AddConsoleCommandPassTest extends TestCase
         $command = $container->get('console.command_loader')->get('invokable');
 
         self::assertTrue($container->has('invokable_command.command'));
+        self::assertSame('The command description', $command->getDescription());
+        self::assertSame('The %command.name% command help content.', $command->getHelp());
+        self::assertCount(2, $command->getUsages());
+        $this->assertStringContainsString('usage1', $command->getUsages()[0]);
+    }
+
+    public function testProcessInvokableSignalableCommand()
+    {
+        $container = new ContainerBuilder();
+        $container->addCompilerPass(new AddConsoleCommandPass(), PassConfig::TYPE_BEFORE_REMOVING);
+
+        $definition = new Definition(InvokableSignalableCommand::class);
+        $definition->addTag('console.command', [
+            'command' => 'invokable-signalable',
+            'description' => 'The command description',
+            'help' => 'The %command.name% command help content.',
+        ]);
+        $container->setDefinition('invokable_signalable_command', $definition);
+
+        $container->compile();
+        $command = $container->get('console.command_loader')->get('invokable-signalable');
+
+        self::assertTrue($container->has('invokable_signalable_command.command'));
         self::assertSame('The command description', $command->getDescription());
         self::assertSame('The %command.name% command help content.', $command->getHelp());
     }
@@ -359,5 +383,23 @@ class InvokableCommand
 {
     public function __invoke(): void
     {
+    }
+}
+
+#[AsCommand(name: 'invokable-signalable', description: 'Just testing', help: 'The %command.name% help content.')]
+class InvokableSignalableCommand implements SignalableCommandInterface
+{
+    public function __invoke(): void
+    {
+    }
+
+    public function getSubscribedSignals(): array
+    {
+        return [];
+    }
+
+    public function handleSignal(int $signal, false|int $previousExitCode = 0): int|false
+    {
+        return false;
     }
 }

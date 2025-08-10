@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Validator\Tests\Validator;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Translation\IdentityTranslator;
@@ -541,9 +542,7 @@ class RecursiveValidatorTest extends TestCase
         $this->validate($entity);
     }
 
-    /**
-     * @dataProvider getConstraintMethods
-     */
+    #[DataProvider('getConstraintMethods')]
     public function testArrayReference($constraintMethod)
     {
         $entity = new Entity();
@@ -582,9 +581,7 @@ class RecursiveValidatorTest extends TestCase
         $this->assertNull($violations[0]->getCode());
     }
 
-    /**
-     * @dataProvider getConstraintMethods
-     */
+    #[DataProvider('getConstraintMethods')]
     public function testRecursiveArrayReference($constraintMethod)
     {
         $entity = new Entity();
@@ -647,9 +644,7 @@ class RecursiveValidatorTest extends TestCase
         $this->assertCount(0, $violations);
     }
 
-    /**
-     * @dataProvider getConstraintMethods
-     */
+    #[DataProvider('getConstraintMethods')]
     public function testArrayTraversalCannotBeDisabled($constraintMethod)
     {
         $entity = new Entity();
@@ -670,9 +665,7 @@ class RecursiveValidatorTest extends TestCase
         $this->assertCount(1, $violations);
     }
 
-    /**
-     * @dataProvider getConstraintMethods
-     */
+    #[DataProvider('getConstraintMethods')]
     public function testRecursiveArrayTraversalCannotBeDisabled($constraintMethod)
     {
         $entity = new Entity();
@@ -694,9 +687,7 @@ class RecursiveValidatorTest extends TestCase
         $this->assertCount(1, $violations);
     }
 
-    /**
-     * @dataProvider getConstraintMethods
-     */
+    #[DataProvider('getConstraintMethods')]
     public function testIgnoreScalarsDuringArrayTraversal($constraintMethod)
     {
         $entity = new Entity();
@@ -710,9 +701,7 @@ class RecursiveValidatorTest extends TestCase
         $this->assertCount(0, $violations);
     }
 
-    /**
-     * @dataProvider getConstraintMethods
-     */
+    #[DataProvider('getConstraintMethods')]
     public function testIgnoreNullDuringArrayTraversal($constraintMethod)
     {
         $entity = new Entity();
@@ -1228,9 +1217,7 @@ class RecursiveValidatorTest extends TestCase
         $this->assertSame('Violation in other group', $violations[0]->getMessage());
     }
 
-    /**
-     * @dataProvider getTestReplaceDefaultGroup
-     */
+    #[DataProvider('getTestReplaceDefaultGroup')]
     public function testReplaceDefaultGroup($sequence, array $assertViolations)
     {
         $entity = new GroupSequenceProviderEntity($sequence);

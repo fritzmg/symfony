@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Security\Core\Authentication\Token;
 
-use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\InMemoryUser;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -32,16 +31,12 @@ abstract class AbstractToken implements TokenInterface, \Serializable
      */
     public function __construct(array $roles = [])
     {
-        $this->roleNames = [];
-
-        foreach ($roles as $role) {
-            $this->roleNames[] = (string) $role;
-        }
+        $this->roleNames = $roles;
     }
 
     public function getRoleNames(): array
     {
-        return $this->roleNames ??= self::__construct($this->user->getRoles()) ?? $this->roleNames;
+        return $this->roleNames ??= $this->user?->getRoles() ?? [];
     }
 
     public function getUserIdentifier(): string
@@ -90,13 +85,7 @@ abstract class AbstractToken implements TokenInterface, \Serializable
      */
     public function __serialize(): array
     {
-        $data = [$this->user, true, null, $this->attributes];
-
-        if (!$this->user instanceof EquatableInterface) {
-            $data[] = $this->roleNames;
-        }
-
-        return $data;
+        return [$this->user, true, null, $this->attributes, $this->getRoleNames()];
     }
 
     /**
@@ -160,12 +149,7 @@ abstract class AbstractToken implements TokenInterface, \Serializable
         $class = static::class;
         $class = substr($class, strrpos($class, '\\') + 1);
 
-        $roles = [];
-        foreach ($this->roleNames as $role) {
-            $roles[] = $role;
-        }
-
-        return \sprintf('%s(user="%s", roles="%s")', $class, $this->getUserIdentifier(), implode(', ', $roles));
+        return \sprintf('%s(user="%s", roles="%s")', $class, $this->getUserIdentifier(), implode(', ', $this->getRoleNames()));
     }
 
     /**

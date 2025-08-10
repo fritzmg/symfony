@@ -11,14 +11,13 @@
 
 namespace Symfony\Component\ErrorHandler\Tests\ErrorRenderer;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\ErrorHandler\ErrorRenderer\HtmlErrorRenderer;
 
 class HtmlErrorRendererTest extends TestCase
 {
-    /**
-     * @dataProvider getRenderData
-     */
+    #[DataProvider('getRenderData')]
     public function testRender(\Throwable $exception, HtmlErrorRenderer $errorRenderer, string $expected)
     {
         $this->assertStringMatchesFormat($expected, $errorRenderer->render($exception)->getAsString());
@@ -55,9 +54,7 @@ HTML;
         ];
     }
 
-    /**
-     * @dataProvider provideFileLinkFormats
-     */
+    #[DataProvider('provideFileLinkFormats')]
     public function testFileLinkFormat(\ErrorException $exception, string $fileLinkFormat, bool $withSymfonyIde, string $expected)
     {
         if ($withSymfonyIde) {
@@ -100,7 +97,7 @@ HTML;
 
     public function testRendersStackWithoutBinaryStrings()
     {
-        // make sure method arguments are available in stack traces (see https://www.php.net/manual/en/ini.core.php)
+        // make sure method arguments are available in stack traces (see https://php.net/ini.core)
         ini_set('zend.exception_ignore_args', false);
 
         $binaryData = file_get_contents(__DIR__.'/../Fixtures/pixel.png');

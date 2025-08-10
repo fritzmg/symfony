@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\Serializer\Tests\Mapping\Factory;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Mapping\AttributeMetadata;
 use Symfony\Component\Serializer\Mapping\ClassMetadata;
@@ -21,9 +24,9 @@ use Symfony\Component\Serializer\Tests\Fixtures\Dummy;
 
 /**
  * @author Fabien Bourigault <bourigaultfabien@gmail.com>
- *
- * @group legacy
  */
+#[IgnoreDeprecations]
+#[Group('legacy')]
 final class CompiledClassMetadataFactoryTest extends TestCase
 {
     public function testItImplementsClassMetadataFactoryInterface()
@@ -54,9 +57,7 @@ final class CompiledClassMetadataFactoryTest extends TestCase
         new CompiledClassMetadataFactory(__DIR__.'/../../Fixtures/object-metadata.php', $classMetadataFactory);
     }
 
-    /**
-     * @dataProvider valueProvider
-     */
+    #[DataProvider('valueProvider')]
     public function testItReturnsTheCompiledMetadata($value)
     {
         $classMetadataFactory = $this->createMock(ClassMetadataFactoryInterface::class);
@@ -101,9 +102,7 @@ final class CompiledClassMetadataFactoryTest extends TestCase
         $this->assertSame($compiledClassMetadataFactory->getMetadataFor(Dummy::class), $compiledClassMetadataFactory->getMetadataFor(Dummy::class));
     }
 
-    /**
-     * @dataProvider valueProvider
-     */
+    #[DataProvider('valueProvider')]
     public function testItHasMetadataFor($value)
     {
         $classMetadataFactory = $this->createMock(ClassMetadataFactoryInterface::class);

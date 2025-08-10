@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+7.4
+---
+
+ * Add microsecond precision to UUIDv7
+
+7.3
+---
+
+ * Add component-specific exception hierarchy
+
 7.2
 ---
 

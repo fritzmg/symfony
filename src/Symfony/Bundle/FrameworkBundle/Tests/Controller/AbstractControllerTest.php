@@ -11,6 +11,8 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\Controller;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\FrameworkBundle\Tests\TestCase;
 use Symfony\Component\DependencyInjection\Container;
@@ -101,7 +103,7 @@ class AbstractControllerTest extends TestCase
         $controller->setContainer($container);
 
         $this->expectException(ServiceNotFoundException::class);
-        $this->expectExceptionMessage('TestAbstractController::getParameter()" method is missing a parameter bag');
+        $this->expectExceptionMessage('::getParameter()" method is missing a parameter bag');
 
         $controller->getParameter('foo');
     }
@@ -236,7 +238,7 @@ class AbstractControllerTest extends TestCase
         $controller = $this->createController();
         $controller->setContainer($container);
 
-        /* @var BinaryFileResponse $response */
+        /** @var BinaryFileResponse $response */
         $response = $controller->file(new File(__FILE__));
         $this->assertInstanceOf(BinaryFileResponse::class, $response);
         $this->assertSame(200, $response->getStatusCode());
@@ -251,7 +253,7 @@ class AbstractControllerTest extends TestCase
     {
         $controller = $this->createController();
 
-        /* @var BinaryFileResponse $response */
+        /** @var BinaryFileResponse $response */
         $response = $controller->file(new File(__FILE__), null, ResponseHeaderBag::DISPOSITION_INLINE);
 
         $this->assertInstanceOf(BinaryFileResponse::class, $response);
@@ -267,7 +269,7 @@ class AbstractControllerTest extends TestCase
     {
         $controller = $this->createController();
 
-        /* @var BinaryFileResponse $response */
+        /** @var BinaryFileResponse $response */
         $fileName = 'test.php';
         $response = $controller->file(new File(__FILE__), $fileName);
 
@@ -284,7 +286,7 @@ class AbstractControllerTest extends TestCase
     {
         $controller = $this->createController();
 
-        /* @var BinaryFileResponse $response */
+        /** @var BinaryFileResponse $response */
         $fileName = 'test.php';
         $response = $controller->file(new File(__FILE__), $fileName, ResponseHeaderBag::DISPOSITION_INLINE);
 
@@ -301,7 +303,7 @@ class AbstractControllerTest extends TestCase
     {
         $controller = $this->createController();
 
-        /* @var BinaryFileResponse $response */
+        /** @var BinaryFileResponse $response */
         $response = $controller->file(__FILE__);
 
         $this->assertInstanceOf(BinaryFileResponse::class, $response);
@@ -317,7 +319,7 @@ class AbstractControllerTest extends TestCase
     {
         $controller = $this->createController();
 
-        /* @var BinaryFileResponse $response */
+        /** @var BinaryFileResponse $response */
         $response = $controller->file(__FILE__, 'test.php');
 
         $this->assertInstanceOf(BinaryFileResponse::class, $response);
@@ -389,9 +391,7 @@ class AbstractControllerTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider provideDenyAccessUnlessGrantedSetsAttributesAsArray
-     */
+    #[DataProvider('provideDenyAccessUnlessGrantedSetsAttributesAsArray')]
     public function testdenyAccessUnlessGrantedSetsAttributesAsArray($attribute, $exceptionAttributes)
     {
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
@@ -526,9 +526,7 @@ class AbstractControllerTest extends TestCase
         $this->assertSame(302, $response->getStatusCode());
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testAddFlash()
     {
         $flashBag = new FlashBag();

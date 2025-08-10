@@ -11,6 +11,7 @@
 
 namespace Symfony\Bridge\Twig\Tests\Command;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bridge\Twig\Command\DebugCommand;
 use Symfony\Component\Console\Application;
@@ -72,9 +73,7 @@ class DebugCommandTest extends TestCase
         $this->createCommandTester()->execute(['name' => '@foo']);
     }
 
-    /**
-     * @dataProvider getDebugTemplateNameTestData
-     */
+    #[DataProvider('getDebugTemplateNameTestData')]
     public function testDebugTemplateName(array $input, string $output, array $paths)
     {
         $tester = $this->createCommandTester($paths);
@@ -294,9 +293,7 @@ TXT
         $this->assertNotSame($display1, $display2);
     }
 
-    /**
-     * @dataProvider provideCompletionSuggestions
-     */
+    #[DataProvider('provideCompletionSuggestions')]
     public function testComplete(array $input, array $expectedSuggestions)
     {
         $projectDir = \dirname(__DIR__).\DIRECTORY_SEPARATOR.'Fixtures';
@@ -304,7 +301,12 @@ TXT
         $environment = new Environment($loader);
 
         $application = new Application();
-        $application->add(new DebugCommand($environment, $projectDir, [], null, null));
+        $command = new DebugCommand($environment, $projectDir, [], null, null);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
 
         $tester = new CommandCompletionTester($application->find('debug:twig'));
         $suggestions = $tester->complete($input, 2);
@@ -339,7 +341,12 @@ TXT
         }
 
         $application = new Application();
-        $application->add(new DebugCommand($environment, $projectDir, $bundleMetadata, $defaultPath, null));
+        $command = new DebugCommand($environment, $projectDir, $bundleMetadata, $defaultPath, null);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
         $command = $application->find('debug:twig');
 
         return new CommandTester($command);

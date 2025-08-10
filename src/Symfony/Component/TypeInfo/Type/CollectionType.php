@@ -65,25 +65,27 @@ class CollectionType extends Type implements WrappingTypeInterface
         $boolTypes = [];
         $objectTypes = [];
 
-        foreach ($types as $t) {
-            // cannot create an union with a standalone type
-            if ($t->isIdentifiedBy(TypeIdentifier::MIXED)) {
-                return Type::mixed();
+        foreach ($types as $type) {
+            foreach (($type instanceof UnionType ? $type->getTypes() : [$type]) as $t) {
+                // cannot create an union with a standalone type
+                if ($t->isIdentifiedBy(TypeIdentifier::MIXED)) {
+                    return Type::mixed();
+                }
+
+                if ($t->isIdentifiedBy(TypeIdentifier::TRUE, TypeIdentifier::FALSE, TypeIdentifier::BOOL)) {
+                    $boolTypes[] = $t;
+
+                    continue;
+                }
+
+                if ($t->isIdentifiedBy(TypeIdentifier::OBJECT)) {
+                    $objectTypes[] = $t;
+
+                    continue;
+                }
+
+                $normalizedTypes[] = $t;
             }
-
-            if ($t->isIdentifiedBy(TypeIdentifier::TRUE, TypeIdentifier::FALSE, TypeIdentifier::BOOL)) {
-                $boolTypes[] = $t;
-
-                continue;
-            }
-
-            if ($t->isIdentifiedBy(TypeIdentifier::OBJECT)) {
-                $objectTypes[] = $t;
-
-                continue;
-            }
-
-            $normalizedTypes[] = $t;
         }
 
         $boolTypes = array_unique($boolTypes);
@@ -117,7 +119,7 @@ class CollectionType extends Type implements WrappingTypeInterface
 
     public function getCollectionKeyType(): Type
     {
-        $defaultCollectionKeyType = self::union(self::int(), self::string());
+        $defaultCollectionKeyType = self::arrayKey();
 
         if ($this->type instanceof GenericType) {
             return match (\count($this->type->getVariableTypes())) {

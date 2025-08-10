@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\HttpKernel\Tests\DependencyInjection;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\Argument\LazyClosure;
 use Symfony\Component\DependencyInjection\Argument\RewindableGenerator;
@@ -309,9 +312,7 @@ class RegisterControllerArgumentLocatorsPassTest extends TestCase
         $this->assertFalse($container->getDefinition('foo')->isLazy());
     }
 
-    /**
-     * @dataProvider provideBindings
-     */
+    #[DataProvider('provideBindings')]
     public function testBindings($bindingName)
     {
         $container = new ContainerBuilder();
@@ -341,9 +342,7 @@ class RegisterControllerArgumentLocatorsPassTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideBindScalarValueToControllerArgument
-     */
+    #[DataProvider('provideBindScalarValueToControllerArgument')]
     public function testBindScalarValueToControllerArgument($bindingKey)
     {
         $container = new ContainerBuilder();
@@ -503,13 +502,14 @@ class RegisterControllerArgumentLocatorsPassTest extends TestCase
 
         $locator = $container->get($locatorId)->get('foo::fooAction');
 
-        $this->assertCount(9, $locator->getProvidedServices());
+        $this->assertCount(10, $locator->getProvidedServices());
         $this->assertInstanceOf(\stdClass::class, $locator->get('service1'));
         $this->assertSame('foo/bar', $locator->get('value'));
         $this->assertSame('foo', $locator->get('expression'));
         $this->assertInstanceOf(\stdClass::class, $locator->get('serviceAsValue'));
         $this->assertInstanceOf(\stdClass::class, $locator->get('expressionAsValue'));
         $this->assertSame('bar', $locator->get('rawValue'));
+        $this->assertStringContainsString('Symfony_Component_HttpKernel_Tests_Fixtures_Suit_APP_SUIT', $locator->get('suit'));
         $this->assertSame('@bar', $locator->get('escapedRawValue'));
         $this->assertSame('foo', $locator->get('customAutowire'));
         $this->assertInstanceOf(FooInterface::class, $autowireCallable = $locator->get('autowireCallable'));
@@ -518,9 +518,8 @@ class RegisterControllerArgumentLocatorsPassTest extends TestCase
         $this->assertFalse($locator->has('service2'));
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testTaggedIteratorAndTaggedLocatorAttributes()
     {
         $container = new ContainerBuilder();
@@ -752,6 +751,8 @@ class WithAutowireAttribute
         \stdClass $expressionAsValue,
         #[Autowire('bar')]
         string $rawValue,
+        #[Autowire(env: 'enum:\Symfony\Component\HttpKernel\Tests\Fixtures\Suit:APP_SUIT')]
+        Suit $suit,
         #[Autowire('@@bar')]
         string $escapedRawValue,
         #[CustomAutowire('some.parameter')]

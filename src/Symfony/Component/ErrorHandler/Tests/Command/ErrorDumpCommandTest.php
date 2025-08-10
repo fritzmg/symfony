@@ -15,7 +15,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\TwigBundle\Tests\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\ErrorHandler\Command\ErrorDumpCommand;
 use Symfony\Component\ErrorHandler\ErrorRenderer\ErrorRendererInterface;
 use Symfony\Component\ErrorHandler\Exception\FlattenException;
@@ -103,11 +102,16 @@ class ErrorDumpCommandTest extends TestCase
         $entrypointLookup = $this->createMock(EntrypointLookupInterface::class);
 
         $application = new Application($kernel);
-        $application->add(new ErrorDumpCommand(
+        $command = new ErrorDumpCommand(
             new Filesystem(),
             $errorRenderer,
             $entrypointLookup,
-        ));
+        );
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
 
         return new CommandTester($application->find('error:dump'));
     }

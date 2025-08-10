@@ -11,8 +11,10 @@
 
 namespace Symfony\Component\Serializer\Tests\Encoder;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ExpectUserDeprecationMessageTrait;
 use Symfony\Component\Serializer\Encoder\CsvEncoder;
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 
@@ -21,8 +23,6 @@ use Symfony\Component\Serializer\Exception\UnexpectedValueException;
  */
 class CsvEncoderTest extends TestCase
 {
-    use ExpectUserDeprecationMessageTrait;
-
     private CsvEncoder $encoder;
 
     protected function setUp(): void
@@ -708,9 +708,32 @@ CSV;
         $this->assertSame("foo,bar\r\nhello,test\r\n", $encoder->encode($value, 'csv'));
     }
 
-    /**
-     * @group legacy
-     */
+    #[DataProvider('provideIterable')]
+    public function testIterable(mixed $data)
+    {
+        $this->assertEquals(<<<'CSV'
+            foo,bar
+            hello,"hey ho"
+            hi,"let's go"
+
+            CSV, $this->encoder->encode($data, 'csv'));
+    }
+
+    public static function provideIterable()
+    {
+        $data = [
+            ['foo' => 'hello', 'bar' => 'hey ho'],
+            ['foo' => 'hi', 'bar' => 'let\'s go'],
+        ];
+
+        yield 'array' => [$data];
+        yield 'array iterator' => [new \ArrayIterator($data)];
+        yield 'iterator aggregate' => [new \IteratorIterator(new \ArrayIterator($data))];
+        yield 'generator' => [(fn (): \Generator => yield from $data)()];
+    }
+
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testPassingNonEmptyEscapeCharIsDeprecated()
     {
         $this->expectUserDeprecationMessage('Since symfony/serializer 7.2: Setting the "csv_escape_char" option is deprecated. The option will be removed in 8.0.');

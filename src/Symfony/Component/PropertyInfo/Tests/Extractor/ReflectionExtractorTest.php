@@ -11,6 +11,10 @@
 
 namespace Symfony\Component\PropertyInfo\Tests\Extractor;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyReadInfo;
@@ -220,13 +224,13 @@ class ReflectionExtractorTest extends TestCase
         );
     }
 
-    /**
-     * @group legacy
-     *
-     * @dataProvider provideLegacyTypes
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[DataProvider('provideLegacyTypes')]
     public function testExtractorsLegacy($property, ?array $type = null)
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypes()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getType()" instead.');
+
         $this->assertEquals($type, $this->extractor->getTypes('Symfony\Component\PropertyInfo\Tests\Fixtures\Dummy', $property, []));
     }
 
@@ -249,13 +253,13 @@ class ReflectionExtractorTest extends TestCase
         ];
     }
 
-    /**
-     * @group legacy
-     *
-     * @dataProvider provideLegacyPhp7Types
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[DataProvider('provideLegacyPhp7Types')]
     public function testExtractPhp7TypeLegacy(string $class, string $property, ?array $type = null)
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypes()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getType()" instead.');
+
         $this->assertEquals($type, $this->extractor->getTypes($class, $property, []));
     }
 
@@ -272,13 +276,13 @@ class ReflectionExtractorTest extends TestCase
         ];
     }
 
-    /**
-     * @group legacy
-     *
-     * @dataProvider provideLegacyPhp71Types
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[DataProvider('provideLegacyPhp71Types')]
     public function testExtractPhp71TypeLegacy($property, ?array $type = null)
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypes()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getType()" instead.');
+
         $this->assertEquals($type, $this->extractor->getTypes('Symfony\Component\PropertyInfo\Tests\Fixtures\Php71Dummy', $property, []));
     }
 
@@ -293,13 +297,13 @@ class ReflectionExtractorTest extends TestCase
         ];
     }
 
-    /**
-     * @group legacy
-     *
-     * @dataProvider provideLegacyPhp80Types
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[DataProvider('provideLegacyPhp80Types')]
     public function testExtractPhp80TypeLegacy(string $property, ?array $type = null)
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypes()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getType()" instead.');
+
         $this->assertEquals($type, $this->extractor->getTypes('Symfony\Component\PropertyInfo\Tests\Fixtures\Php80Dummy', $property, []));
     }
 
@@ -317,13 +321,13 @@ class ReflectionExtractorTest extends TestCase
         ];
     }
 
-    /**
-     * @group legacy
-     *
-     * @dataProvider provideLegacyPhp81Types
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[DataProvider('provideLegacyPhp81Types')]
     public function testExtractPhp81TypeLegacy(string $property, ?array $type = null)
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypes()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getType()" instead.');
+
         $this->assertEquals($type, $this->extractor->getTypes('Symfony\Component\PropertyInfo\Tests\Fixtures\Php81Dummy', $property, []));
     }
 
@@ -340,13 +344,13 @@ class ReflectionExtractorTest extends TestCase
         $this->assertFalse($this->extractor->isWritable(Php81Dummy::class, 'foo'));
     }
 
-    /**
-     * @group legacy
-     *
-     * @dataProvider provideLegacyPhp82Types
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[DataProvider('provideLegacyPhp82Types')]
     public function testExtractPhp82TypeLegacy(string $property, ?array $type = null)
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypes()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getType()" instead.');
+
         $this->assertEquals($type, $this->extractor->getTypes('Symfony\Component\PropertyInfo\Tests\Fixtures\Php82Dummy', $property, []));
     }
 
@@ -361,13 +365,13 @@ class ReflectionExtractorTest extends TestCase
         yield ['someCollection', null];
     }
 
-    /**
-     * @group legacy
-     *
-     * @dataProvider provideLegacyDefaultValue
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[DataProvider('provideLegacyDefaultValue')]
     public function testExtractWithDefaultValueLegacy($property, $type)
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypes()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getType()" instead.');
+
         $this->assertEquals($type, $this->extractor->getTypes(DefaultValue::class, $property, []));
     }
 
@@ -382,9 +386,7 @@ class ReflectionExtractorTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider getReadableProperties
-     */
+    #[DataProvider('getReadableProperties')]
     public function testIsReadable($property, $expected)
     {
         $this->assertSame(
@@ -413,9 +415,7 @@ class ReflectionExtractorTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider getWritableProperties
-     */
+    #[DataProvider('getWritableProperties')]
     public function testIsWritable($property, $expected)
     {
         $this->assertSame(
@@ -484,9 +484,7 @@ class ReflectionExtractorTest extends TestCase
         $this->assertTrue($protectedExtractor->isReadable(Dummy::class, 'baz'));
     }
 
-    /**
-     * @dataProvider getInitializableProperties
-     */
+    #[DataProvider('getInitializableProperties')]
     public function testIsInitializable(string $class, string $property, bool $expected)
     {
         $this->assertSame($expected, $this->extractor->isInitializable($class, $property));
@@ -504,13 +502,13 @@ class ReflectionExtractorTest extends TestCase
         ];
     }
 
-    /**
-     * @group legacy
-     *
-     * @dataProvider provideLegacyConstructorTypes
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[DataProvider('provideLegacyConstructorTypes')]
     public function testExtractTypeConstructorLegacy(string $class, string $property, ?array $type = null)
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypes()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getType()" instead.');
+
         /* Check that constructor extractions works by default, and if passed in via context.
            Check that null is returned if constructor extraction is disabled */
         $this->assertEquals($type, $this->extractor->getTypes($class, $property, []));
@@ -544,11 +542,12 @@ class ReflectionExtractorTest extends TestCase
         $this->assertEquals(PropertyWriteInfo::TYPE_NONE, $bazMutator->getType());
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testTypedPropertiesLegacy()
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypes()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getType()" instead.');
+
         $this->assertEquals([new LegacyType(LegacyType::BUILTIN_TYPE_OBJECT, false, Dummy::class)], $this->extractor->getTypes(Php74Dummy::class, 'dummy'));
         $this->assertEquals([new LegacyType(LegacyType::BUILTIN_TYPE_BOOL, true)], $this->extractor->getTypes(Php74Dummy::class, 'nullableBoolProp'));
         $this->assertEquals([new LegacyType(LegacyType::BUILTIN_TYPE_ARRAY, false, null, true, new LegacyType(LegacyType::BUILTIN_TYPE_INT), new LegacyType(LegacyType::BUILTIN_TYPE_STRING))], $this->extractor->getTypes(Php74Dummy::class, 'stringCollection'));
@@ -557,9 +556,7 @@ class ReflectionExtractorTest extends TestCase
         $this->assertEquals([new LegacyType(LegacyType::BUILTIN_TYPE_ARRAY, true, null, true, new LegacyType(LegacyType::BUILTIN_TYPE_INT), new LegacyType(LegacyType::BUILTIN_TYPE_OBJECT, false, Dummy::class))], $this->extractor->getTypes(Php74Dummy::class, 'nullableTypedCollection'));
     }
 
-    /**
-     * @dataProvider readAccessorProvider
-     */
+    #[DataProvider('readAccessorProvider')]
     public function testGetReadAccessor($class, $property, $found, $type, $name, $visibility, $static)
     {
         $extractor = new ReflectionExtractor(null, null, null, true, ReflectionExtractor::ALLOW_PUBLIC | ReflectionExtractor::ALLOW_PROTECTED | ReflectionExtractor::ALLOW_PRIVATE);
@@ -592,9 +589,7 @@ class ReflectionExtractorTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeMutatorProvider
-     */
+    #[DataProvider('writeMutatorProvider')]
     public function testGetWriteMutator($class, $property, $allowConstruct, $found, $type, $name, $addName, $removeName, $visibility, $static)
     {
         $extractor = new ReflectionExtractor(null, null, null, true, ReflectionExtractor::ALLOW_PUBLIC | ReflectionExtractor::ALLOW_PROTECTED | ReflectionExtractor::ALLOW_PRIVATE);
@@ -680,13 +675,13 @@ class ReflectionExtractorTest extends TestCase
         $this->assertSame(PropertyWriteInfo::TYPE_NONE, $writeMutatorWithoutConstructor->getType());
     }
 
-    /**
-     * @group legacy
-     *
-     * @dataProvider provideLegacyExtractConstructorTypes
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    #[DataProvider('provideLegacyExtractConstructorTypes')]
     public function testExtractConstructorTypesLegacy(string $property, ?array $type = null)
     {
+        $this->expectUserDeprecationMessage('Since symfony/property-info 7.3: The "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypesFromConstructor()" method is deprecated, use "Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::getTypeFromConstructor()" instead.');
+
         $this->assertEquals($type, $this->extractor->getTypesFromConstructor('Symfony\Component\PropertyInfo\Tests\Fixtures\ConstructorDummy', $property));
     }
 
@@ -701,9 +696,7 @@ class ReflectionExtractorTest extends TestCase
         ];
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testAsymmetricVisibility()
     {
         $this->assertTrue($this->extractor->isReadable(AsymmetricVisibility::class, 'publicPrivate'));
@@ -714,9 +707,7 @@ class ReflectionExtractorTest extends TestCase
         $this->assertFalse($this->extractor->isWritable(AsymmetricVisibility::class, 'protectedPrivate'));
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testAsymmetricVisibilityAllowPublicOnly()
     {
         $extractor = new ReflectionExtractor(null, null, null, true, ReflectionExtractor::ALLOW_PUBLIC);
@@ -729,9 +720,7 @@ class ReflectionExtractorTest extends TestCase
         $this->assertFalse($extractor->isWritable(AsymmetricVisibility::class, 'protectedPrivate'));
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testAsymmetricVisibilityAllowProtectedOnly()
     {
         $extractor = new ReflectionExtractor(null, null, null, true, ReflectionExtractor::ALLOW_PROTECTED);
@@ -744,9 +733,7 @@ class ReflectionExtractorTest extends TestCase
         $this->assertFalse($extractor->isWritable(AsymmetricVisibility::class, 'protectedPrivate'));
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testAsymmetricVisibilityAllowPrivateOnly()
     {
         $extractor = new ReflectionExtractor(null, null, null, true, ReflectionExtractor::ALLOW_PRIVATE);
@@ -759,9 +746,7 @@ class ReflectionExtractorTest extends TestCase
         $this->assertTrue($extractor->isWritable(AsymmetricVisibility::class, 'protectedPrivate'));
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testVirtualProperties()
     {
         $this->assertTrue($this->extractor->isReadable(VirtualProperties::class, 'virtualNoSetHook'));
@@ -772,11 +757,8 @@ class ReflectionExtractorTest extends TestCase
         $this->assertTrue($this->extractor->isWritable(VirtualProperties::class, 'virtualHook'));
     }
 
-    /**
-     * @dataProvider provideAsymmetricVisibilityMutator
-     *
-     * @requires PHP 8.4
-     */
+    #[DataProvider('provideAsymmetricVisibilityMutator')]
+    #[RequiresPhp('8.4')]
     public function testAsymmetricVisibilityMutator(string $property, string $readVisibility, string $writeVisibility)
     {
         $extractor = new ReflectionExtractor(null, null, null, true, ReflectionExtractor::ALLOW_PUBLIC | ReflectionExtractor::ALLOW_PROTECTED | ReflectionExtractor::ALLOW_PRIVATE);
@@ -798,11 +780,8 @@ class ReflectionExtractorTest extends TestCase
         yield ['protectedPrivate', PropertyReadInfo::VISIBILITY_PROTECTED, PropertyWriteInfo::VISIBILITY_PRIVATE];
     }
 
-    /**
-     * @dataProvider provideVirtualPropertiesMutator
-     *
-     * @requires PHP 8.4
-     */
+    #[DataProvider('provideVirtualPropertiesMutator')]
+    #[RequiresPhp('8.4')]
     public function testVirtualPropertiesMutator(string $property, string $readVisibility, string $writeVisibility)
     {
         $extractor = new ReflectionExtractor(null, null, null, true, ReflectionExtractor::ALLOW_PUBLIC | ReflectionExtractor::ALLOW_PROTECTED | ReflectionExtractor::ALLOW_PRIVATE);
@@ -824,9 +803,7 @@ class ReflectionExtractorTest extends TestCase
         yield ['virtualHook', PropertyReadInfo::VISIBILITY_PUBLIC, PropertyWriteInfo::VISIBILITY_PUBLIC];
     }
 
-    /**
-     * @dataProvider typesProvider
-     */
+    #[DataProvider('typesProvider')]
     public function testExtractors(string $property, ?Type $type)
     {
         $this->assertEquals($type, $this->extractor->getType(Dummy::class, $property));
@@ -850,9 +827,7 @@ class ReflectionExtractorTest extends TestCase
         yield ['dates', Type::list(Type::object(\DateTimeImmutable::class))];
     }
 
-    /**
-     * @dataProvider php7TypesProvider
-     */
+    #[DataProvider('php7TypesProvider')]
     public function testExtractPhp7Type(string $class, string $property, ?Type $type)
     {
         $this->assertEquals($type, $this->extractor->getType($class, $property));
@@ -872,9 +847,7 @@ class ReflectionExtractorTest extends TestCase
         yield [Php7ParentDummy::class, 'parent', Type::object(\stdClass::class)];
     }
 
-    /**
-     * @dataProvider php71TypesProvider
-     */
+    #[DataProvider('php71TypesProvider')]
     public function testExtractPhp71Type(string $property, ?Type $type)
     {
         $this->assertEquals($type, $this->extractor->getType(Php71Dummy::class, $property));
@@ -892,9 +865,7 @@ class ReflectionExtractorTest extends TestCase
         yield ['donotexist', null];
     }
 
-    /**
-     * @dataProvider php80TypesProvider
-     */
+    #[DataProvider('php80TypesProvider')]
     public function testExtractPhp80Type(string $property, ?Type $type)
     {
         $this->assertEquals($type, $this->extractor->getType(Php80Dummy::class, $property));
@@ -922,9 +893,7 @@ class ReflectionExtractorTest extends TestCase
         yield ['mixedProperty', Type::mixed()];
     }
 
-    /**
-     * @dataProvider php81TypesProvider
-     */
+    #[DataProvider('php81TypesProvider')]
     public function testExtractPhp81Type(string $property, ?Type $type)
     {
         $this->assertEquals($type, $this->extractor->getType(Php81Dummy::class, $property));
@@ -939,9 +908,7 @@ class ReflectionExtractorTest extends TestCase
         yield ['collection', Type::intersection(Type::object(\Traversable::class), Type::object(\Countable::class))];
     }
 
-    /**
-     * @dataProvider php82TypesProvider
-     */
+    #[DataProvider('php82TypesProvider')]
     public function testExtractPhp82Type(string $property, ?Type $type)
     {
         $this->assertEquals($type, $this->extractor->getType(Php82Dummy::class, $property));
@@ -958,9 +925,7 @@ class ReflectionExtractorTest extends TestCase
         yield ['someCollection', Type::union(Type::intersection(Type::object(\Traversable::class), Type::object(\Countable::class)), Type::null())];
     }
 
-    /**
-     * @dataProvider defaultValueProvider
-     */
+    #[DataProvider('defaultValueProvider')]
     public function testExtractWithDefaultValue(string $property, ?Type $type)
     {
         $this->assertEquals($type, $this->extractor->getType(DefaultValue::class, $property));
@@ -978,9 +943,7 @@ class ReflectionExtractorTest extends TestCase
         yield ['defaultNull', null];
     }
 
-    /**
-     * @dataProvider constructorTypesProvider
-     */
+    #[DataProvider('constructorTypesProvider')]
     public function testExtractTypeConstructor(string $class, string $property, ?Type $type)
     {
         /* Check that constructor extractions works by default, and if passed in via context.
@@ -1016,9 +979,7 @@ class ReflectionExtractorTest extends TestCase
         $this->assertEquals(Type::nullable(Type::list(Type::object(Dummy::class))), $this->extractor->getType(Php74Dummy::class, 'nullableTypedCollection'));
     }
 
-    /**
-     * @dataProvider extractConstructorTypesProvider
-     */
+    #[DataProvider('extractConstructorTypesProvider')]
     public function testExtractConstructorType(string $property, ?Type $type)
     {
         $this->assertEquals($type, $this->extractor->getTypeFromConstructor(ConstructorDummy::class, $property));

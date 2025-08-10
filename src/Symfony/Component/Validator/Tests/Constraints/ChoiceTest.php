@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Validator\Tests\Constraints;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
@@ -19,6 +21,8 @@ use Symfony\Component\Validator\Tests\Fixtures\ConstraintChoiceWithPreset;
 
 class ChoiceTest extends TestCase
 {
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testSetDefaultPropertyChoice()
     {
         $constraint = new ConstraintChoiceWithPreset('A');
@@ -63,7 +67,7 @@ class ChoiceDummy
     #[Choice(choices: ['foo', 'bar'], message: 'myMessage')]
     private $b;
 
-    #[Choice([1, 2], groups: ['my_group'], payload: 'some attached data')]
+    #[Choice(choices: [1, 2], groups: ['my_group'], payload: 'some attached data')]
     private $c;
 
     #[Choice(choices: ['one' => 1, 'two' => 2])]

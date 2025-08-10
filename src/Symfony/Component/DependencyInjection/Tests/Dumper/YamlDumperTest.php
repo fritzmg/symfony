@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\DependencyInjection\Tests\Dumper;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Argument\AbstractArgument;
@@ -170,9 +171,7 @@ class YamlDumperTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider provideDefaultClasses
-     */
+    #[DataProvider('provideDefaultClasses')]
     public function testDumpHandlesDefaultAttribute($class, $expectedFile)
     {
         $container = new ContainerBuilder();
@@ -213,6 +212,26 @@ class YamlDumperTest extends TestCase
         $dumper = new YamlDumper($container);
 
         $this->assertEquals(file_get_contents(self::$fixturesPath.'/yaml/services_with_array_tags.yml'), $dumper->dump());
+    }
+
+    public function testDumpResolvedEnvPlaceholders()
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('%env(PARAMETER_NAME)%', '%env(PARAMETER_VALUE)%');
+        $container
+            ->register('service', '%env(SERVICE_CLASS)%')
+            ->setFile('%env(SERVICE_FILE)%')
+            ->addArgument('%env(SERVICE_ARGUMENT)%')
+            ->setProperty('%env(SERVICE_PROPERTY_NAME)%', '%env(SERVICE_PROPERTY_VALUE)%')
+            ->addMethodCall('%env(SERVICE_METHOD_NAME)%', ['%env(SERVICE_METHOD_ARGUMENT)%'])
+            ->setFactory('%env(SERVICE_FACTORY)%')
+            ->setConfigurator('%env(SERVICE_CONFIGURATOR)%')
+            ->setPublic(true)
+        ;
+        $container->compile();
+        $dumper = new YamlDumper($container);
+
+        $this->assertEquals(file_get_contents(self::$fixturesPath.'/yaml/container_with_env_placeholders.yml'), $dumper->dump());
     }
 
     private function assertEqualYamlStructure(string $expected, string $yaml, string $message = '')

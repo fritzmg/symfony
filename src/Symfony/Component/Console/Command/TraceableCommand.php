@@ -27,7 +27,7 @@ use Symfony\Component\Stopwatch\Stopwatch;
  *
  * @author Jules Pietri <jules@heahprod.com>
  */
-final class TraceableCommand extends Command implements SignalableCommandInterface
+final class TraceableCommand extends Command
 {
     public readonly Command $command;
     public int $exitCode;
@@ -89,15 +89,11 @@ final class TraceableCommand extends Command implements SignalableCommandInterfa
 
     public function getSubscribedSignals(): array
     {
-        return $this->command instanceof SignalableCommandInterface ? $this->command->getSubscribedSignals() : [];
+        return $this->command->getSubscribedSignals();
     }
 
     public function handleSignal(int $signal, int|false $previousExitCode = 0): int|false
     {
-        if (!$this->command instanceof SignalableCommandInterface) {
-            return false;
-        }
-
         $event = $this->stopwatch->start($this->getName().'.handle_signal');
 
         $exit = $this->command->handleSignal($signal, $previousExitCode);
@@ -296,7 +292,7 @@ final class TraceableCommand extends Command implements SignalableCommandInterfa
         $event = $this->stopwatch->start($this->getName(), 'command');
 
         try {
-            $this->exitCode = parent::run($input, $output);
+            $this->exitCode = $this->command->run($input, $output);
         } finally {
             $event->stop();
 

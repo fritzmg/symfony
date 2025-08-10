@@ -1000,6 +1000,30 @@ class UrlMatcherTest extends TestCase
         $this->assertEquals(['_route' => 'foo', 'bär' => 'baz', 'bäz' => 'foo'], $matcher->match('/foo/baz'));
     }
 
+    public function testParameterWithRequirementWithDefault()
+    {
+        $collection = new RouteCollection();
+
+        $route = new Route('/test/{foo}', ['foo' => 'foo-'], ['foo' => '\w+']);
+        $collection->add('test', $route);
+
+        $matcher = $this->getUrlMatcher($collection);
+
+        $result = $matcher->match('/test/foo');
+        $this->assertSame('test', $result['_route']);
+        $this->assertSame('foo', $result['foo']);
+
+        try {
+            $matcher->match('/test/foo-');
+        } catch (ResourceNotFoundException $e) {
+            $this->assertStringContainsString('No routes found', $e->getMessage());
+        }
+
+        $result = $matcher->match('/test');
+        $this->assertSame('test', $result['_route']);
+        $this->assertSame('foo-', $result['foo']);
+    }
+
     public function testMapping()
     {
         $collection = new RouteCollection();
@@ -1011,7 +1035,30 @@ class UrlMatcherTest extends TestCase
             '_route' => 'a',
             'slug' => 'vienna-2024',
             '_route_mapping' => [
-                'slug' => 'conference',
+                'slug' => [
+                    'conference',
+                    'slug',
+                ],
+            ],
+        ];
+        $this->assertEquals($expected, $matcher->match('/conference/vienna-2024'));
+    }
+
+    public function testMappingwithAlias()
+    {
+        $collection = new RouteCollection();
+        $collection->add('a', new Route('/conference/{conferenceSlug:conference.slug}'));
+
+        $matcher = $this->getUrlMatcher($collection);
+
+        $expected = [
+            '_route' => 'a',
+            'conferenceSlug' => 'vienna-2024',
+            '_route_mapping' => [
+                'conferenceSlug' => [
+                    'conference',
+                    'slug',
+                ],
             ],
         ];
         $this->assertEquals($expected, $matcher->match('/conference/vienna-2024'));

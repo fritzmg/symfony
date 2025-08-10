@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\DomCrawler\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
+use PHPUnit\Framework\Error\Notice;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Form;
@@ -104,9 +107,7 @@ abstract class AbstractCrawlerTestCase extends TestCase
         $this->assertEquals('http://symfony.com/contact', $crawler->filterXPath('//a')->link()->getUri(), '->addHtmlContent() adds nodes from an HTML string');
     }
 
-    /**
-     * @requires extension mbstring
-     */
+    #[RequiresPhpExtension('mbstring')]
     public function testAddHtmlContentCharset()
     {
         $crawler = $this->createCrawler();
@@ -123,9 +124,7 @@ abstract class AbstractCrawlerTestCase extends TestCase
         $this->assertEquals('http://symfony.com/contact', current($crawler->filterXPath('//a')->links())->getUri(), '->addHtmlContent() correctly handles a non-existent base tag href attribute');
     }
 
-    /**
-     * @requires extension mbstring
-     */
+    #[RequiresPhpExtension('mbstring')]
     public function testAddHtmlContentCharsetGbk()
     {
         $crawler = $this->createCrawler();
@@ -190,9 +189,7 @@ abstract class AbstractCrawlerTestCase extends TestCase
         $this->assertEquals('var foo = "bär";', $crawler->filterXPath('//script')->text(), '->addContent() does not interfere with script content');
     }
 
-    /**
-     * @requires extension iconv
-     */
+    #[RequiresPhpExtension('iconv')]
     public function testAddContentNonUtf8()
     {
         $crawler = $this->createCrawler();
@@ -393,9 +390,7 @@ abstract class AbstractCrawlerTestCase extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideInnerTextExamples
-     */
+    #[DataProvider('provideInnerTextExamples')]
     public function testInnerText(
         string $xPathQuery,
         string $expectedText,
@@ -452,10 +447,10 @@ abstract class AbstractCrawlerTestCase extends TestCase
         $this->assertCount(0, $crawler->filterXPath('/body'));
         $this->assertCount(1, $crawler->filterXPath('./body'));
         $this->assertCount(1, $crawler->filterXPath('.//body'));
-        $this->assertCount(5, $crawler->filterXPath('.//input'));
+        $this->assertCount(6, $crawler->filterXPath('.//input'));
         $this->assertCount(4, $crawler->filterXPath('//form')->filterXPath('//button | //input'));
         $this->assertCount(1, $crawler->filterXPath('body'));
-        $this->assertCount(6, $crawler->filterXPath('//button | //input'));
+        $this->assertCount(8, $crawler->filterXPath('//button | //input'));
         $this->assertCount(1, $crawler->filterXPath('//body'));
         $this->assertCount(1, $crawler->filterXPath('descendant-or-self::body'));
         $this->assertCount(1, $crawler->filterXPath('//div[@id="parent"]')->filterXPath('./div'), 'A child selection finds only the current div');
@@ -723,16 +718,23 @@ abstract class AbstractCrawlerTestCase extends TestCase
         $this->assertNotSame($crawler, $crawler->selectButton('FooValue'), '->selectButton() returns a new instance of a crawler');
         $this->assertInstanceOf(Crawler::class, $crawler->selectButton('FooValue'), '->selectButton() returns a new instance of a crawler');
 
-        $this->assertEquals(1, $crawler->selectButton('FooValue')->count(), '->selectButton() selects buttons');
-        $this->assertEquals(1, $crawler->selectButton('FooName')->count(), '->selectButton() selects buttons');
-        $this->assertEquals(1, $crawler->selectButton('FooId')->count(), '->selectButton() selects buttons');
+        $this->assertCount(1, $crawler->selectButton('FooValue'), '->selectButton() selects type-submit inputs by value');
+        $this->assertCount(1, $crawler->selectButton('FooName'), '->selectButton() selects type-submit inputs by name');
+        $this->assertCount(1, $crawler->selectButton('FooId'), '->selectButton() selects type-submit inputs by id');
 
-        $this->assertEquals(1, $crawler->selectButton('BarValue')->count(), '->selectButton() selects buttons');
-        $this->assertEquals(1, $crawler->selectButton('BarName')->count(), '->selectButton() selects buttons');
-        $this->assertEquals(1, $crawler->selectButton('BarId')->count(), '->selectButton() selects buttons');
+        $this->assertCount(1, $crawler->selectButton('BarValue'), '->selectButton() selects type-button inputs by value');
+        $this->assertCount(1, $crawler->selectButton('BarName'), '->selectButton() selects type-button inputs by name');
+        $this->assertCount(1, $crawler->selectButton('BarId'), '->selectButton() selects type-button inputs by id');
 
-        $this->assertEquals(1, $crawler->selectButton('FooBarValue')->count(), '->selectButton() selects buttons with form attribute too');
-        $this->assertEquals(1, $crawler->selectButton('FooBarName')->count(), '->selectButton() selects buttons with form attribute too');
+        $this->assertCount(1, $crawler->selectButton('ImageAlt'), '->selectButton() selects type-image inputs by alt');
+
+        $this->assertCount(1, $crawler->selectButton('ButtonValue'), '->selectButton() selects buttons by value');
+        $this->assertCount(1, $crawler->selectButton('ButtonName'), '->selectButton() selects buttons by name');
+        $this->assertCount(1, $crawler->selectButton('ButtonId'), '->selectButton() selects buttons by id');
+        $this->assertCount(1, $crawler->selectButton('ButtonText'), '->selectButton() selects buttons by text content');
+
+        $this->assertCount(1, $crawler->selectButton('FooBarValue'), '->selectButton() selects buttons with form attribute too');
+        $this->assertCount(1, $crawler->selectButton('FooBarName'), '->selectButton() selects buttons with form attribute too');
     }
 
     public function testSelectButtonWithSingleQuotesInNameAttribute()
@@ -968,7 +970,7 @@ HTML;
         yield ['#bar', false, '.foo'];
     }
 
-    /** @dataProvider provideMatchTests */
+    #[DataProvider('provideMatchTests')]
     public function testMatch(string $mainNodeSelector, bool $expected, string $selector)
     {
         $html = <<<'HTML'
@@ -1136,7 +1138,7 @@ HTML;
             $crawler = $this->createCrawler('<p></p>');
             $crawler->filter('p')->children();
             $this->assertTrue(true, '->children() does not trigger a notice if the node has no children');
-        } catch (\PHPUnit\Framework\Error\Notice $e) {
+        } catch (Notice $e) {
             $this->fail('->children() does not trigger a notice if the node has no children');
         }
     }
@@ -1192,9 +1194,7 @@ HTML;
         $this->createTestCrawler()->filterXPath('//ol')->ancestors();
     }
 
-    /**
-     * @dataProvider getBaseTagData
-     */
+    #[DataProvider('getBaseTagData')]
     public function testBaseTag($baseValue, $linkValue, $expectedUri, $currentUri = null, $description = '')
     {
         $crawler = $this->createCrawler($this->getDoctype().'<html><base href="'.$baseValue.'"><a href="'.$linkValue.'"></a></html>', $currentUri);
@@ -1212,9 +1212,7 @@ HTML;
         ];
     }
 
-    /**
-     * @dataProvider getBaseTagWithFormData
-     */
+    #[DataProvider('getBaseTagWithFormData')]
     public function testBaseTagWithForm($baseValue, $actionValue, $expectedUri, $currentUri = null, $description = null)
     {
         $crawler = $this->createCrawler($this->getDoctype().'<html><base href="'.$baseValue.'"><form method="post" action="'.$actionValue.'"><button type="submit" name="submit"/></form></html>', $currentUri);
@@ -1321,6 +1319,9 @@ HTML;
 
                     <input type="submit" value="FooBarValue" name="FooBarName" form="FooFormId" />
                     <input type="text" value="FooTextValue" name="FooTextName" form="FooFormId" />
+
+                    <input type="image" alt="ImageAlt" form="FooFormId">
+                    <button form="FooFormId">ButtonText</button>
 
                     <ul class="first">
                         <li class="first">One</li>

@@ -1,15 +1,24 @@
 CHANGELOG
 =========
 
+7.4
+---
+
+ * Allow `#[AsAlias]` to be extended
+ * Add argument `$target` to `ContainerBuilder::registerAliasForArgument()`
+ * Deprecate registering a service without a class when its id is a non-existing FQCN
+
 7.3
 ---
 
  * Make `#[AsTaggedItem]` repeatable
  * Support `@>` as a shorthand for `!service_closure` in yaml files
  * Don't skip classes with private constructor when autodiscovering
- * Add `Definition::addExcludeTag()` and `ContainerBuilder::findExcludedServiceIds()`
+ * Add `Definition::addResourceTag()` and `ContainerBuilder::findTaggedResourceIds()`
    for auto-configuration of classes excluded from the service container
+ * Accept multiple auto-configuration callbacks for the same attribute class
  * Leverage native lazy objects when possible for lazy services
+ * Add `when` argument to `#[AsAlias]`
 
 7.2
 ---

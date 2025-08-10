@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Validator\Tests\Constraints;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\Validator\Constraints\Url;
 use Symfony\Component\Validator\Constraints\UrlValidator;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
@@ -50,9 +51,7 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
         $this->validator->validate(new \stdClass(), new Url(requireTld: true));
     }
 
-    /**
-     * @dataProvider getValidUrls
-     */
+    #[DataProvider('getValidUrls')]
     public function testValidUrls($url)
     {
         $this->validator->validate($url, new Url(requireTld: false));
@@ -60,9 +59,7 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
         $this->assertNoViolation();
     }
 
-    /**
-     * @dataProvider getValidUrls
-     */
+    #[DataProvider('getValidUrls')]
     public function testValidUrlsWithNewLine($url)
     {
         $this->validator->validate($url."\n", new Url(requireTld: false));
@@ -73,9 +70,7 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
             ->assertRaised();
     }
 
-    /**
-     * @dataProvider getValidUrlsWithWhitespaces
-     */
+    #[DataProvider('getValidUrlsWithWhitespaces')]
     public function testValidUrlsWithWhitespaces($url)
     {
         $this->validator->validate($url, new Url(
@@ -86,10 +81,8 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
         $this->assertNoViolation();
     }
 
-    /**
-     * @dataProvider getValidRelativeUrls
-     * @dataProvider getValidUrls
-     */
+    #[DataProvider('getValidRelativeUrls')]
+    #[DataProvider('getValidUrls')]
     public function testValidRelativeUrl($url)
     {
         $constraint = new Url(
@@ -102,10 +95,8 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
         $this->assertNoViolation();
     }
 
-    /**
-     * @dataProvider getValidRelativeUrls
-     * @dataProvider getValidUrls
-     */
+    #[DataProvider('getValidRelativeUrls')]
+    #[DataProvider('getValidUrls')]
     public function testValidRelativeUrlWithNewLine(string $url)
     {
         $constraint = new Url(relativeProtocol: true, requireTld: false);
@@ -188,6 +179,8 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
             ['http://xn--e1afmkfd.xn--80akhbyknj4f.xn--e1afmkfd/'],
             ['http://xn--espaa-rta.xn--ca-ol-fsay5a/'],
             ['http://xn--d1abbgf6aiiy.xn--p1ai/'],
+            ['http://example.xn--p1ai/'],
+            ['http://xn--d1abbgf6aiiy.example.xn--p1ai/'],
             ['http://☎.com/'],
             ['http://username:password@symfony.com'],
             ['http://user.name:password@symfony.com'],
@@ -224,9 +217,7 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
         ];
     }
 
-    /**
-     * @dataProvider getInvalidUrls
-     */
+    #[DataProvider('getInvalidUrls')]
     public function testInvalidUrls($url)
     {
         $constraint = new Url(
@@ -242,10 +233,8 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
             ->assertRaised();
     }
 
-    /**
-     * @dataProvider getInvalidRelativeUrls
-     * @dataProvider getInvalidUrls
-     */
+    #[DataProvider('getInvalidRelativeUrls')]
+    #[DataProvider('getInvalidUrls')]
     public function testInvalidRelativeUrl($url)
     {
         $constraint = new Url(
@@ -326,9 +315,7 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
         ];
     }
 
-    /**
-     * @dataProvider getValidCustomUrls
-     */
+    #[DataProvider('getValidCustomUrls')]
     public function testCustomProtocolIsValid($url, $requireTld)
     {
         $constraint = new Url(
@@ -350,9 +337,7 @@ class UrlValidatorTest extends ConstraintValidatorTestCase
         ];
     }
 
-    /**
-     * @dataProvider getUrlsForRequiredTld
-     */
+    #[DataProvider('getUrlsForRequiredTld')]
     public function testRequiredTld(string $url, bool $requireTld, bool $isValid)
     {
         $constraint = new Url(requireTld: $requireTld);

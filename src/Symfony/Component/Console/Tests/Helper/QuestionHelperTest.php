@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Console\Tests\Helper;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\MissingInputException;
@@ -27,9 +29,7 @@ use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Terminal;
 use Symfony\Component\Console\Tester\ApplicationTester;
 
-/**
- * @group tty
- */
+#[Group('tty')]
 class QuestionHelperTest extends AbstractQuestionHelperTestCase
 {
     public function testAskChoice()
@@ -348,9 +348,7 @@ class QuestionHelperTest extends AbstractQuestionHelperTestCase
         ];
     }
 
-    /**
-     * @dataProvider getInputs
-     */
+    #[DataProvider('getInputs')]
     public function testAskWithAutocompleteWithMultiByteCharacter($character)
     {
         if (!Terminal::hasSttyAvailable()) {
@@ -522,9 +520,7 @@ EOD;
         $this->assertSame(8, ftell($response));
     }
 
-    /**
-     * @dataProvider getAskConfirmationData
-     */
+    #[DataProvider('getAskConfirmationData')]
     public function testAskConfirmation($question, $expected, $default = true)
     {
         $dialog = new QuestionHelper();
@@ -565,7 +561,7 @@ EOD;
 
         $error = 'This is not a color!';
         $validator = function ($color) use ($error) {
-            if (!\in_array($color, ['white', 'black'])) {
+            if (!\in_array($color, ['white', 'black'], true)) {
                 throw new \InvalidArgumentException($error);
             }
 
@@ -588,9 +584,7 @@ EOD;
         }
     }
 
-    /**
-     * @dataProvider simpleAnswerProvider
-     */
+    #[DataProvider('simpleAnswerProvider')]
     public function testSelectChoiceFromSimpleChoices($providedAnswer, $expectedValue)
     {
         $possibleChoices = [
@@ -622,9 +616,7 @@ EOD;
         ];
     }
 
-    /**
-     * @dataProvider specialCharacterInMultipleChoice
-     */
+    #[DataProvider('specialCharacterInMultipleChoice')]
     public function testSpecialCharacterChoiceFromMultipleChoiceList($providedAnswer, $expectedValue)
     {
         $possibleChoices = [
@@ -653,9 +645,7 @@ EOD;
         ];
     }
 
-    /**
-     * @dataProvider answerProvider
-     */
+    #[DataProvider('answerProvider')]
     public function testSelectChoiceFromChoiceList($providedAnswer, $expectedValue)
     {
         $possibleChoices = [
@@ -750,7 +740,7 @@ EOD;
     public function testAskThrowsExceptionOnMissingInputForChoiceQuestion()
     {
         $this->expectException(MissingInputException::class);
-        $this->expectExceptionMessage('Aborted.');
+        $this->expectExceptionMessage('Aborted while asking: Choice');
         (new QuestionHelper())->ask($this->createStreamableInputInterfaceMock($this->getInputStream('')), $this->createOutputInterface(), new ChoiceQuestion('Choice', ['a', 'b']));
     }
 
@@ -777,7 +767,7 @@ EOD;
         $application = new Application();
         $application->setAutoExit(false);
         $application->register('question')
-            ->setCode(function (InputInterface $input, OutputInterface $output) use (&$tries) {
+            ->setCode(function (InputInterface $input, OutputInterface $output) use (&$tries): int {
                 $question = new Question('This is a promptable question');
                 $question->setValidator(function ($value) use (&$tries) {
                     ++$tries;

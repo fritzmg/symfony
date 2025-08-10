@@ -20,7 +20,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\ErrorHandler\ErrorRenderer\FileLinkFormatter;
 
 /**
@@ -137,7 +136,7 @@ EOF
                     }
                     $target = substr($id, \strlen($previousId) + 3);
 
-                    if ($previousId.' $'.(new Target($target))->getParsedName() === $serviceId) {
+                    if ($container->findDefinition($id) === $container->findDefinition($serviceId)) {
                         $serviceLine .= ' - <fg=magenta>target:</><fg=cyan>'.$target.'</>';
                         break;
                     }
@@ -185,7 +184,7 @@ EOF
             return '';
         }
 
-        return (string) $this->fileLinkFormatter->format($r->getFileName(), $r->getStartLine());
+        return $r->getFileName() ? ($this->fileLinkFormatter->format($r->getFileName(), $r->getStartLine()) ?: '') : '';
     }
 
     public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void

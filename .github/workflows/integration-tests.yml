@@ -19,7 +19,7 @@ jobs:
 
   tests:
     name: Integration
-    runs-on: Ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
@@ -172,7 +172,7 @@ jobs:
         run: |
           echo "::group::apt-get update"
           sudo wget -O - https://packages.couchbase.com/clients/c/repos/deb/couchbase.key | sudo apt-key add -
-          echo "deb https://packages.couchbase.com/clients/c/repos/deb/ubuntu2004 focal focal/main" | sudo tee /etc/apt/sources.list.d/couchbase.list
+          echo "deb https://packages.couchbase.com/clients/c/repos/deb/ubuntu2404 noble noble/main" | sudo tee /etc/apt/sources.list.d/couchbase.list
           sudo apt-get update
           echo "::endgroup::"
 
@@ -251,7 +251,7 @@ jobs:
           git diff --exit-code src/ || (echo '::error::Run "php .github/sync-translations.php" to fix XLIFF files.' && exit 1)
 
       - name: Run tests
-        run: ./phpunit --group integration -v
+        run: ./phpunit --group integration
         env:
           INTEGRATION_FTP_URL: 'ftp://test:test@localhost'
           REDIS_HOST: 'localhost:16379'

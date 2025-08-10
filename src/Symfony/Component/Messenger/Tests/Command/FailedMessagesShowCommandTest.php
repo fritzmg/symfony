@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Messenger\Tests\Command;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandCompletionTester;
@@ -25,9 +26,7 @@ use Symfony\Component\Messenger\Stamp\TransportMessageIdStamp;
 use Symfony\Component\Messenger\Transport\Receiver\ListableReceiverInterface;
 use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
 
-/**
- * @group time-sensitive
- */
+#[Group('time-sensitive')]
 class FailedMessagesShowCommandTest extends TestCase
 {
     private string|false $colSize;
@@ -177,7 +176,7 @@ EOF
         $tester->setInputs([0]);
         $tester->execute([]);
 
-        $this->assertStringContainsString(sprintf(<<<EOF
+        $this->assertStringContainsString(\sprintf(<<<EOF
 15   stdClass   %s   Things are bad!
 EOF
             ,
@@ -335,7 +334,7 @@ EOF;
         $command = new FailedMessagesShowCommand($failureTransportName, $serviceLocator);
         $tester = new CommandTester($command);
         $tester->execute(['id' => 42], ['verbosity' => OutputInterface::VERBOSITY_VERY_VERBOSE]);
-        $this->assertStringMatchesFormat(sprintf(<<<'EOF'
+        $this->assertStringMatchesFormat(\sprintf(<<<'EOF'
 %%A
 Exception:
 ==========
@@ -385,14 +384,13 @@ EOF
 
         $tester = new CommandTester($command);
         $tester->execute(['--transport' => $failureTransportName]);
-        $this->assertStringContainsString(sprintf(<<<EOF
+        $this->assertStringContainsString(\sprintf(<<<EOF
 15   stdClass   %s   Things are bad!
 EOF
             ,
             $redeliveryStamp->getRedeliveredAt()->format('Y-m-d H:i:s')),
             $tester->getDisplay(true));
     }
-
 
     public function testCompletingTransport()
     {

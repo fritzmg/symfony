@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Messenger\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
@@ -26,6 +28,7 @@ use Symfony\Component\Messenger\Event\WorkerRateLimitedEvent;
 use Symfony\Component\Messenger\Event\WorkerRunningEvent;
 use Symfony\Component\Messenger\Event\WorkerStartedEvent;
 use Symfony\Component\Messenger\Event\WorkerStoppedEvent;
+use Symfony\Component\Messenger\EventListener\ResetMemoryUsageListener;
 use Symfony\Component\Messenger\EventListener\ResetServicesListener;
 use Symfony\Component\Messenger\EventListener\StopWorkerOnMessageLimitListener;
 use Symfony\Component\Messenger\Exception\RuntimeException;
@@ -38,6 +41,8 @@ use Symfony\Component\Messenger\MessageBus;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Middleware\HandleMessageMiddleware;
 use Symfony\Component\Messenger\Stamp\ConsumedByWorkerStamp;
+use Symfony\Component\Messenger\Stamp\FlushBatchHandlersStamp;
+use Symfony\Component\Messenger\Stamp\NoAutoAckStamp;
 use Symfony\Component\Messenger\Stamp\ReceivedStamp;
 use Symfony\Component\Messenger\Stamp\SentStamp;
 use Symfony\Component\Messenger\Stamp\StampInterface;
@@ -52,9 +57,7 @@ use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\Reservation;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 
-/**
- * @group time-sensitive
- */
+#[Group('time-sensitive')]
 class WorkerTest extends TestCase
 {
     public function testWorkerDispatchTheReceivedMessage()
@@ -586,7 +589,50 @@ class WorkerTest extends TestCase
         $this->assertSame($expectedMessages, $handler->processedMessages);
     }
 
-    public function testGcCollectCyclesIsCalledOnMessageHandle()
+    public function testFlushRemovesNoAutoAckStampOnException()
+    {
+        $envelope = new Envelope(new DummyMessage('Test'));
+        $receiver = new DummyReceiver([[$envelope]]);
+
+        $bus = new class implements MessageBusInterface {
+            public function dispatch(object $message, array $stamps = []): Envelope
+            {
+                $envelope = Envelope::wrap($message, $stamps);
+                if ($envelope->last(FlushBatchHandlersStamp::class)) {
+                    throw new \RuntimeException('Flush failed');
+                }
+
+                return $envelope;
+            }
+        };
+
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(WorkerRunningEvent::class, function (WorkerRunningEvent $event) {
+            static $calls = 0;
+            if (++$calls >= 2) {
+                $event->getWorker()->stop();
+            }
+        });
+
+        $worker = new Worker(['transport' => $receiver], $bus, $dispatcher, clock: new MockClock());
+
+        $reflection = new \ReflectionClass($worker);
+        $unacksProperty = $reflection->getProperty('unacks');
+        $unacks = $unacksProperty->getValue($worker);
+        $dummyHandler = new DummyBatchHandler();
+        $envelopeWithNoAutoAck = $envelope->with(new NoAutoAckStamp(new HandlerDescriptor($dummyHandler)));
+        $unacks->attach($dummyHandler, [$envelopeWithNoAutoAck, 'transport']);
+
+        $worker->run();
+
+        $this->assertSame(1, $receiver->getRejectCount());
+        $rejectedEnvelopes = $receiver->getRejectedEnvelopes();
+        $this->assertCount(1, $rejectedEnvelopes);
+        $rejectedEnvelope = $rejectedEnvelopes[0];
+        $this->assertNull($rejectedEnvelope->last(NoAutoAckStamp::class));
+    }
+
+    public function testGcCollectCyclesIsCalledOnIdleWorker()
     {
         $apiMessage = new DummyMessage('API');
 
@@ -595,19 +641,66 @@ class WorkerTest extends TestCase
         $bus = $this->createMock(MessageBusInterface::class);
 
         $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber(new ResetMemoryUsageListener());
+        $before = 0;
+        $dispatcher->addListener(WorkerRunningEvent::class, function (WorkerRunningEvent $event) use (&$before) {
+            static $i = 0;
+
+            $after = gc_status()['runs'];
+            if (0 === $i) {
+                $this->assertFalse($event->isWorkerIdle());
+                $this->assertSame(0, $after - $before);
+            } elseif (1 === $i) {
+                $this->assertTrue($event->isWorkerIdle());
+                $this->assertSame(1, $after - $before);
+            } elseif (3 === $i) {
+                // Wait a few idle phases before stopping.
+                $this->assertSame(1, $after - $before);
+                $event->getWorker()->stop();
+            }
+
+            ++$i;
+        }, \PHP_INT_MIN);
+
+        $worker = new Worker(['transport' => $receiver], $bus, $dispatcher);
+
+        gc_collect_cycles();
+        $before = gc_status()['runs'];
+
+        $worker->run([
+            'sleep' => 0,
+        ]);
+    }
+
+    public function testMemoryUsageIsResetOnMessageHandle()
+    {
+        $apiMessage = new DummyMessage('API');
+
+        $receiver = new DummyReceiver([[new Envelope($apiMessage)]]);
+
+        $bus = $this->createMock(MessageBusInterface::class);
+
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber(new ResetMemoryUsageListener());
         $dispatcher->addSubscriber(new StopWorkerOnMessageLimitListener(1));
+
+        // Allocate and deallocate 4 MB. The use of random_int() is to
+        // prevent compile-time optimization.
+        $memory = str_repeat(random_int(0, 1), 4 * 1024 * 1024);
+        unset($memory);
+
+        $before = memory_get_peak_usage();
 
         $worker = new Worker(['transport' => $receiver], $bus, $dispatcher);
         $worker->run();
 
-        $gcStatus = gc_status();
+        // This should be roughly 4 MB smaller than $before.
+        $after = memory_get_peak_usage();
 
-        $this->assertGreaterThan(0, $gcStatus['runs']);
+        $this->assertTrue($after < $before);
     }
 
-    /**
-     * @requires extension pcntl
-     */
+    #[RequiresPhpExtension('pcntl')]
     public function testKeepalive()
     {
         ClockMock::withClockMock(false);

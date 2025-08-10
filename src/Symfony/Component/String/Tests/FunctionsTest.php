@@ -11,19 +11,19 @@
 
 namespace Symfony\Component\String\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\String\AbstractString;
 use Symfony\Component\String\ByteString;
 use Symfony\Component\String\UnicodeString;
+
 use function Symfony\Component\String\b;
 use function Symfony\Component\String\s;
 use function Symfony\Component\String\u;
 
 final class FunctionsTest extends TestCase
 {
-    /**
-     * @dataProvider provideSStrings
-     */
+    #[DataProvider('provideSStrings')]
     public function testS(AbstractString $expected, ?string $input)
     {
         $this->assertEquals($expected, s($input));
@@ -41,9 +41,7 @@ final class FunctionsTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideUStrings
-     */
+    #[DataProvider('provideUStrings')]
     public function testU(UnicodeString $expected, ?string $input)
     {
         $this->assertEquals($expected, u($input));
@@ -59,9 +57,7 @@ final class FunctionsTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideBStrings
-     */
+    #[DataProvider('provideBStrings')]
     public function testB(ByteString $expected, ?string $input)
     {
         $this->assertEquals($expected, b($input));

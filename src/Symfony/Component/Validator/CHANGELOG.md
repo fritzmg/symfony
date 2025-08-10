@@ -1,14 +1,187 @@
 CHANGELOG
 =========
 
+7.4
+---
+
+ * Deprecate passing a list of choices to the first argument of the `Choice` constraint. Use the `choices` option instead
+ * Add the `min` and `max` parameter to the `Length` constraint violation
+ * Deprecate `getRequiredOptions()` and `getDefaultOption()` methods of the `All`, `AtLeastOneOf`, `CardScheme`, `Collection`,
+   `CssColor`, `Expression`, `Regex`, `Sequentially`, `Type`, and `When` constraints
+ * Deprecate evaluating options in the base `Constraint` class. Initialize properties in the constructor of the concrete constraint
+   class instead.
+
+   Before:
+
+   ```php
+   class CustomConstraint extends Constraint
+   {
+       public $option1;
+       public $option2;
+
+       public function __construct(?array $options = null)
+       {
+           parent::__construct($options);
+       }
+   }
+   ```
+
+   After:
+
+   ```php
+   use Symfony\Component\Validator\Attribute\HasNamedArguments;
+
+   class CustomConstraint extends Constraint
+   {
+       #[HasNamedArguments]
+       public function __construct(
+           public $option1 = null,
+           public $option2 = null,
+           ?array $groups = null,
+           mixed $payload = null,
+       ) {
+           parent::__construct(null, $groups, $payload);
+       }
+   }
+   ```
+
+ * Deprecate the `getRequiredOptions()` method of the base `Constraint` class. Use mandatory constructor arguments instead.
+
+   Before:
+
+   ```php
+   class CustomConstraint extends Constraint
+   {
+       public $option1;
+       public $option2;
+
+       public function __construct(?array $options = null)
+       {
+           parent::__construct($options);
+       }
+
+       public function getRequiredOptions()
+       {
+           return ['option1'];
+       }
+   }
+   ```
+
+   After:
+
+   ```php
+   use Symfony\Component\Validator\Attribute\HasNamedArguments;
+
+   class CustomConstraint extends Constraint
+   {
+       #[HasNamedArguments]
+       public function __construct(
+           public $option1,
+           public $option2 = null,
+           ?array $groups = null,
+           mixed $payload = null,
+       ) {
+           parent::__construct(null, $groups, $payload);
+       }
+   }
+   ```
+ * Deprecate the `normalizeOptions()` and `getDefaultOption()` methods of the base `Constraint` class without replacements.
+   Overriding them in child constraint will not have any effects starting with Symfony 8.0.
+ * Deprecate passing an array of options to the `Composite` constraint class. Initialize the properties referenced with `getNestedConstraints()`
+   in child classes before calling the constructor of `Composite`.
+
+   Before:
+
+   ```php
+   class CustomCompositeConstraint extends Composite
+   {
+       public array $constraints = [];
+
+       public function __construct(?array $options = null)
+       {
+           parent::__construct($options);
+       }
+
+       protected function getCompositeOption(): string
+       {
+           return 'constraints';
+       }
+   }
+   ```
+
+   After:
+
+   ```php
+   use Symfony\Component\Validator\Attribute\HasNamedArguments;
+
+   class CustomCompositeConstraint extends Composite
+   {
+       #[HasNamedArguments]
+       public function __construct(
+           public array $constraints,
+           ?array $groups = null,
+           mixed $payload = null)
+       {
+           parent::__construct(null, $groups, $payload);
+       }
+   }
+   ```
+
 7.3
 ---
 
  * Add the `filenameCharset` and `filenameCountUnit` options to the `File` constraint
  * Deprecate defining custom constraints not supporting named arguments
+
+   Before:
+
+   ```php
+   use Symfony\Component\Validator\Constraint;
+
+   class CustomConstraint extends Constraint
+   {
+       public function __construct(array $options)
+       {
+           // ...
+       }
+   }
+   ```
+
+   After:
+
+   ```php
+   use Symfony\Component\Validator\Attribute\HasNamedArguments;
+   use Symfony\Component\Validator\Constraint;
+
+   class CustomConstraint extends Constraint
+   {
+       #[HasNamedArguments]
+       public function __construct($option1, $option2, $groups, $payload)
+       {
+           // ...
+       }
+   }
+   ```
  * Deprecate passing an array of options to the constructors of the constraint classes, pass each option as a dedicated argument instead
+
+   Before:
+
+   ```php
+   new NotNull([
+       'groups' => ['foo', 'bar'],
+       'message' => 'a custom constraint violation message',
+   ])
+   ```
+
+   After:
+
+   ```php
+   new NotNull(
+       groups: ['foo', 'bar'],
+       message: 'a custom constraint violation message',
+   )
+   ```
  * Add support for ratio checks for SVG files to the `Image` constraint
- * Add the `Slug` constraint
  * Add support for the `otherwise` option in the `When` constraint
  * Add support for multiple fields containing nested constraints in `Composite` constraints
  * Add the `stopOnFirstError` option to the `Unique` constraint to validate all elements

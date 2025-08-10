@@ -216,7 +216,7 @@ abstract class FileLoader extends BaseFileLoader
             }
             $r = $this->container->getReflectionClass($class);
             $defaultAlias = 1 === \count($interfaces) ? $interfaces[0] : null;
-            foreach ($r->getAttributes(AsAlias::class) as $attr) {
+            foreach ($r->getAttributes(AsAlias::class, \ReflectionAttribute::IS_INSTANCEOF) as $attr) {
                 /** @var AsAlias $attribute */
                 $attribute = $attr->newInstance();
                 $alias = $attribute->id ?? $defaultAlias;
@@ -224,10 +224,14 @@ abstract class FileLoader extends BaseFileLoader
                 if (null === $alias) {
                     throw new LogicException(\sprintf('Alias cannot be automatically determined for class "%s". If you have used the #[AsAlias] attribute with a class implementing multiple interfaces, add the interface you want to alias to the first parameter of #[AsAlias].', $class));
                 }
-                if (isset($this->aliases[$alias])) {
-                    throw new LogicException(\sprintf('The "%s" alias has already been defined with the #[AsAlias] attribute in "%s".', $alias, $this->aliases[$alias]));
+
+                if (!$attribute->when || \in_array($this->env, $attribute->when, true)) {
+                    if (isset($this->aliases[$alias])) {
+                        throw new LogicException(\sprintf('The "%s" alias has already been defined with the #[AsAlias] attribute in "%s".', $alias, $this->aliases[$alias]));
+                    }
+
+                    $this->aliases[$alias] = new Alias($class, $public);
                 }
-                $this->aliases[$alias] = new Alias($class, $public);
             }
         }
 

@@ -11,8 +11,10 @@
 
 namespace Symfony\Component\Serializer\Tests\Context\Encoder;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ExpectUserDeprecationMessageTrait;
 use Symfony\Component\Serializer\Context\Encoder\CsvEncoderContextBuilder;
 use Symfony\Component\Serializer\Encoder\CsvEncoder;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
@@ -22,8 +24,6 @@ use Symfony\Component\Serializer\Exception\InvalidArgumentException;
  */
 class CsvEncoderContextBuilderTest extends TestCase
 {
-    use ExpectUserDeprecationMessageTrait;
-
     private CsvEncoderContextBuilder $contextBuilder;
 
     protected function setUp(): void
@@ -32,10 +32,9 @@ class CsvEncoderContextBuilderTest extends TestCase
     }
 
     /**
-     * @dataProvider withersDataProvider
-     *
      * @param array<string, mixed> $values
      */
+    #[DataProvider('withersDataProvider')]
     public function testWithers(array $values)
     {
         $context = $this->contextBuilder
@@ -122,9 +121,8 @@ class CsvEncoderContextBuilderTest extends TestCase
         $this->contextBuilder->withEnclosure('ọ');
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testCannotSetMultipleBytesAsEscapeChar()
     {
         $this->expectUserDeprecationMessage('Since symfony/serializer 7.2: The "Symfony\Component\Serializer\Context\Encoder\CsvEncoderContextBuilder::withEscapeChar" method is deprecated. It will be removed in 8.0.');
@@ -133,9 +131,8 @@ class CsvEncoderContextBuilderTest extends TestCase
         $this->contextBuilder->withEscapeChar('ọ');
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testWithEscapeCharIsDeprecated()
     {
         $this->expectUserDeprecationMessage('Since symfony/serializer 7.2: The "Symfony\Component\Serializer\Context\Encoder\CsvEncoderContextBuilder::withEscapeChar" method is deprecated. It will be removed in 8.0.');

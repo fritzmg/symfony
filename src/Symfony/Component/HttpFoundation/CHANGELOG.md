@@ -1,12 +1,20 @@
 CHANGELOG
 =========
 
+7.4
+---
+
+ * Deprecate using `Request::sendHeaders()` after headers have already been sent; use a `StreamedResponse` instead
+
 7.3
 ---
 
  * Add support for iterable of string in `StreamedResponse`
  * Add `EventStreamResponse` and `ServerEvent` classes to streamline server event streaming
  * Add support for `valkey:` / `valkeys:` schemes for sessions
+ * `Request::getPreferredLanguage()` now favors a more preferred language above exactly matching a locale
+ * Allow `UriSigner` to use a `ClockInterface`
+ * Add `UriSigner::verify()`
 
 7.2
 ---

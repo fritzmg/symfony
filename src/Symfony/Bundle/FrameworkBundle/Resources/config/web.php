@@ -12,6 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\FrameworkBundle\Controller\ControllerHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\ControllerResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\TemplateController;
 use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
@@ -138,12 +139,19 @@ return static function (ContainerConfigurator $container) {
                 service('logger')->nullOnInvalid(),
                 param('kernel.debug'),
                 abstract_arg('an exceptions to log & status code mapping'),
+                abstract_arg('list of loggers by log_channel'),
             ])
             ->tag('kernel.event_subscriber')
             ->tag('monolog.logger', ['channel' => 'request'])
 
         ->set('controller.cache_attribute_listener', CacheAttributeListener::class)
             ->tag('kernel.event_subscriber')
+            ->tag('kernel.reset', ['method' => '?reset'])
+
+        ->set('controller.helper', ControllerHelper::class)
+            ->tag('container.service_subscriber')
+
+        ->alias(ControllerHelper::class, 'controller.helper')
 
     ;
 };

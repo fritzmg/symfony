@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\AssetMapper\Tests\ImportMap;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\AssetMapper\AssetMapperInterface;
@@ -49,9 +50,7 @@ class ImportMapManagerTest extends TestCase
         $this->filesystem->remove(self::$writableRoot);
     }
 
-    /**
-     * @dataProvider getRequirePackageTests
-     */
+    #[DataProvider('getRequirePackageTests')]
     public function testRequire(array $packages, int $expectedProviderPackageArgumentCount, array $resolvedPackages, array $expectedImportMap)
     {
         $manager = $this->createImportMapManager();
@@ -314,9 +313,7 @@ class ImportMapManagerTest extends TestCase
         $manager->update(['cowsay']);
     }
 
-    /**
-     * @dataProvider getPackageNameTests
-     */
+    #[DataProvider('getPackageNameTests')]
     public function testParsePackageName(string $packageName, array $expectedReturn)
     {
         $parsed = ImportMapManager::parsePackageName($packageName);

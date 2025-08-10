@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+7.4
+---
+
+ * Allow setting aliases and the hidden flag via the command name passed to the constructor
+ * Introduce `Symfony\Component\Console\Application::addCommand()` to simplify using invokable commands when the component is used standalone
+ * Deprecate `Symfony\Component\Console\Application::add()` in favor of `Symfony\Component\Console\Application::addCommand()`
+ * Add `BackedEnum` support with `#[Argument]` and `#[Option]` inputs in invokable commands
+ * Allow Usages to be specified via `#[AsCommand]` attribute.
+ * Allow passing invokable commands to `Symfony\Component\Console\Tester\CommandTester`
+
 7.3
 ---
 
@@ -11,6 +21,10 @@ CHANGELOG
  * Add support for help definition via `AsCommand` attribute
  * Deprecate methods `Command::getDefaultName()` and `Command::getDefaultDescription()` in favor of the `#[AsCommand]` attribute
  * Add support for Markdown format in `Table`
+ * Add support for `LockableTrait` in invokable commands
+ * Deprecate returning a non-integer value from a `\Closure` function set via `Command::setCode()`
+ * Mark `#[AsCommand]` attribute as `@final`
+ * Add support for `SignalableCommandInterface` with invokable commands
 
 7.2
 ---

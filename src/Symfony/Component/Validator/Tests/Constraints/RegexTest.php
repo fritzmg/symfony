@@ -11,9 +11,13 @@
 
 namespace Symfony\Component\Validator\Tests\Constraints;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Exception\InvalidArgumentException;
+use Symfony\Component\Validator\Exception\MissingOptionsException;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Mapping\Loader\AttributeLoader;
 
@@ -64,9 +68,7 @@ class RegexTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideHtmlPatterns
-     */
+    #[DataProvider('provideHtmlPatterns')]
     public function testGetHtmlPattern($pattern, $htmlPattern, $match = true)
     {
         $constraint = new Regex(
@@ -96,9 +98,8 @@ class RegexTest extends TestCase
         $this->assertEquals('trim', $regex->normalizer);
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testInvalidNormalizerThrowsException()
     {
         $this->expectException(InvalidArgumentException::class);
@@ -106,9 +107,8 @@ class RegexTest extends TestCase
         new Regex(['pattern' => '/^[0-9]+$/', 'normalizer' => 'Unknown Callable']);
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testInvalidNormalizerObjectThrowsException()
     {
         $this->expectException(InvalidArgumentException::class);
@@ -137,6 +137,33 @@ class RegexTest extends TestCase
         [$cConstraint] = $metadata->properties['c']->getConstraints();
         self::assertSame(['my_group'], $cConstraint->groups);
         self::assertSame('some attached data', $cConstraint->payload);
+    }
+
+    public function testMissingPattern()
+    {
+        $this->expectException(MissingOptionsException::class);
+        $this->expectExceptionMessage(\sprintf('The options "pattern" must be set for constraint "%s".', Regex::class));
+
+        new Regex(null);
+    }
+
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    public function testMissingPatternDoctrineStyle()
+    {
+        $this->expectException(MissingOptionsException::class);
+        $this->expectExceptionMessage(\sprintf('The options "pattern" must be set for constraint "%s".', Regex::class));
+
+        new Regex([]);
+    }
+
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
+    public function testPatternInOptionsArray()
+    {
+        $constraint = new Regex(null, options: ['pattern' => '/^[0-9]+$/']);
+
+        $this->assertSame('/^[0-9]+$/', $constraint->pattern);
     }
 }
 

@@ -11,6 +11,8 @@
 
 namespace Symfony\Contracts\Tests\Service;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -19,9 +21,8 @@ use Symfony\Contracts\Service\ServiceLocatorTrait;
 use Symfony\Contracts\Service\ServiceSubscriberInterface;
 use Symfony\Contracts\Service\ServiceSubscriberTrait;
 
-/**
- * @group legacy
- */
+#[IgnoreDeprecations]
+#[Group('legacy')]
 class ServiceSubscriberTraitTest extends TestCase
 {
     public static function setUpBeforeClass(): void
@@ -33,7 +34,8 @@ class ServiceSubscriberTraitTest extends TestCase
     {
         $expected = [
             LegacyTestService::class.'::aService' => Service2::class,
-            LegacyTestService::class.'::nullableService' => '?'.Service2::class,
+            LegacyTestService::class.'::nullableInAttribute' => '?'.Service2::class,
+            LegacyTestService::class.'::nullableReturnType' => '?'.Service2::class,
             new SubscribedService(LegacyTestService::class.'::withAttribute', Service2::class, true, new Required()),
         ];
 
@@ -54,7 +56,7 @@ class ServiceSubscriberTraitTest extends TestCase
         $container = new class([]) implements ContainerInterface {
             use ServiceLocatorTrait;
         };
-        $service = new class extends ParentWithMagicCall {
+        $service = new class extends LegacyParentWithMagicCall {
             use ServiceSubscriberTrait;
 
             private $container;

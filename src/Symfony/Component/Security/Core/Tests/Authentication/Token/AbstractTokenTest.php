@@ -11,8 +11,10 @@
 
 namespace Symfony\Component\Security\Core\Tests\Authentication\Token;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait;
 use Symfony\Component\Security\Core\Authentication\Token\AbstractToken;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\InMemoryUser;
@@ -20,11 +22,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 class AbstractTokenTest extends TestCase
 {
-    use ExpectDeprecationTrait;
-
-    /**
-     * @dataProvider provideUsers
-     */
+    #[DataProvider('provideUsers')]
     public function testGetUserIdentifier($user, string $username)
     {
         $token = new ConcreteToken(['ROLE_FOO']);
@@ -37,9 +35,8 @@ class AbstractTokenTest extends TestCase
         yield [new InMemoryUser('fabien', null), 'fabien'];
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testEraseCredentials()
     {
         $token = new ConcreteToken(['ROLE_FOO']);
@@ -48,7 +45,7 @@ class AbstractTokenTest extends TestCase
         $user->expects($this->once())->method('eraseCredentials');
         $token->setUser($user);
 
-        $this->expectDeprecation(\sprintf('Since symfony/security-core 7.3: The "%s::eraseCredentials()" method is deprecated and will be removed in 8.0, erase credentials using the "__serialize()" method instead.', TokenInterface::class));
+        $this->expectUserDeprecationMessage(\sprintf('Since symfony/security-core 7.3: The "%s::eraseCredentials()" method is deprecated and will be removed in 8.0, erase credentials using the "__serialize()" method instead.', TokenInterface::class));
 
         $token->eraseCredentials();
     }
@@ -92,9 +89,7 @@ class AbstractTokenTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider provideUsers
-     */
+    #[DataProvider('provideUsers')]
     public function testSetUser($user)
     {
         $token = new ConcreteToken();

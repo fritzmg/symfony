@@ -11,10 +11,14 @@
 
 namespace Symfony\Component\Config\Tests\Builder;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Builder\ClassBuilder;
 use Symfony\Component\Config\Builder\ConfigBuilderGenerator;
 use Symfony\Component\Config\Builder\ConfigBuilderInterface;
+use Symfony\Component\Config\Builder\Method;
+use Symfony\Component\Config\Builder\Property;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Tests\Builder\Fixtures\AddToList;
 use Symfony\Component\Config\Tests\Builder\Fixtures\NodeInitialValues;
@@ -28,12 +32,11 @@ use Symfony\Config\AddToListConfig;
  * Test to use the generated config and test its output.
  *
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
- *
- * @covers \Symfony\Component\Config\Builder\ClassBuilder
- * @covers \Symfony\Component\Config\Builder\ConfigBuilderGenerator
- * @covers \Symfony\Component\Config\Builder\Method
- * @covers \Symfony\Component\Config\Builder\Property
  */
+#[CoversClass(ClassBuilder::class)]
+#[CoversClass(ConfigBuilderGenerator::class)]
+#[CoversClass(Method::class)]
+#[CoversClass(Property::class)]
 class GeneratedConfigTest extends TestCase
 {
     private array $tempDir = [];
@@ -58,6 +61,7 @@ class GeneratedConfigTest extends TestCase
             'AddToList' => 'add_to_list',
             'NodeInitialValues' => 'node_initial_values',
             'ArrayExtraKeys' => 'array_extra_keys',
+            'ArrayValues' => 'array_values',
         ];
 
         foreach ($array as $name => $alias) {
@@ -73,9 +77,7 @@ class GeneratedConfigTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider fixtureNames
-     */
+    #[DataProvider('fixtureNames')]
     public function testConfig(string $name, string $alias)
     {
         $basePath = __DIR__.'/Fixtures/';
@@ -159,10 +161,12 @@ class GeneratedConfigTest extends TestCase
      */
     private function generateConfigBuilder(string $configurationClass, ?string &$outputDir = null)
     {
-        $outputDir = tempnam(sys_get_temp_dir(), 'sf_config_builder_');
-        unlink($outputDir);
-        mkdir($outputDir);
-        $this->tempDir[] = $outputDir;
+        if (null === $outputDir) {
+            $outputDir = tempnam(sys_get_temp_dir(), 'sf_config_builder_');
+            unlink($outputDir);
+            mkdir($outputDir);
+            $this->tempDir[] = $outputDir;
+        }
 
         $configuration = new $configurationClass();
         $rootNode = $configuration->getConfigTreeBuilder()->buildTree();
@@ -193,6 +197,8 @@ class GeneratedConfigTest extends TestCase
             }
             $currentFiles[substr($file->getPathname(), \strlen($current))] = $file->getPathname();
         }
+        ksort($expectedFiles);
+        ksort($currentFiles);
 
         $this->assertSame(array_keys($expectedFiles), array_keys($currentFiles));
         foreach ($expectedFiles as $fileName => $filePath) {

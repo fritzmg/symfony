@@ -11,8 +11,10 @@
 
 namespace Symfony\Component\TypeInfo\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ExpectUserDeprecationMessageTrait;
 use Symfony\Component\TypeInfo\Tests\Fixtures\DummyBackedEnum;
 use Symfony\Component\TypeInfo\Tests\Fixtures\DummyEnum;
 use Symfony\Component\TypeInfo\Type;
@@ -31,8 +33,6 @@ use Symfony\Component\TypeInfo\TypeIdentifier;
 
 class TypeFactoryTest extends TestCase
 {
-    use ExpectUserDeprecationMessageTrait;
-
     public function testCreateBuiltin()
     {
         $this->assertEquals(new BuiltinType(TypeIdentifier::INT), Type::builtin(TypeIdentifier::INT));
@@ -210,11 +210,24 @@ class TypeFactoryTest extends TestCase
     {
         $this->assertEquals(new ArrayShapeType(['foo' => ['type' => Type::bool(), 'optional' => true]]), Type::arrayShape(['foo' => ['type' => Type::bool(), 'optional' => true]]));
         $this->assertEquals(new ArrayShapeType(['foo' => ['type' => Type::bool(), 'optional' => false]]), Type::arrayShape(['foo' => Type::bool()]));
+        $this->assertEquals(new ArrayShapeType(
+            shape: ['foo' => ['type' => Type::bool(), 'optional' => false]],
+            extraKeyType: Type::arrayKey(),
+            extraValueType: Type::mixed(),
+        ), Type::arrayShape(['foo' => Type::bool()], sealed: false));
+        $this->assertEquals(new ArrayShapeType(
+            shape: ['foo' => ['type' => Type::bool(), 'optional' => false]],
+            extraKeyType: Type::string(),
+            extraValueType: Type::bool(),
+        ), Type::arrayShape(['foo' => Type::bool()], extraKeyType: Type::string(), extraValueType: Type::bool()));
     }
 
-    /**
-     * @dataProvider createFromValueProvider
-     */
+    public function testCreateArrayKey()
+    {
+        $this->assertEquals(new UnionType(Type::int(), Type::string()), Type::arrayKey());
+    }
+
+    #[DataProvider('createFromValueProvider')]
     public function testCreateFromValue(Type $expected, mixed $value)
     {
         $this->assertEquals($expected, Type::fromValue($value));
@@ -239,6 +252,8 @@ class TypeFactoryTest extends TestCase
         yield [Type::object(\DateTimeImmutable::class), new \DateTimeImmutable()];
         yield [Type::object(), new \stdClass()];
         yield [Type::list(Type::object()), [new \stdClass(), new \DateTimeImmutable()]];
+        yield [Type::enum(DummyEnum::class), DummyEnum::ONE];
+        yield [Type::enum(DummyBackedEnum::class), DummyBackedEnum::ONE];
 
         // collection
         $arrayAccess = new class implements \ArrayAccess {
@@ -261,18 +276,18 @@ class TypeFactoryTest extends TestCase
             }
         };
 
+        yield [Type::array(Type::mixed()), []];
         yield [Type::list(Type::int()), [1, 2, 3]];
         yield [Type::dict(Type::bool()), ['a' => true, 'b' => false]];
         yield [Type::array(Type::string()), [1 => 'foo', 'bar' => 'baz']];
         yield [Type::array(Type::nullable(Type::bool()), Type::int()), [1 => true, 2 => null, 3 => false]];
-        yield [Type::collection(Type::object(\ArrayIterator::class), Type::mixed(), Type::union(Type::int(), Type::string())), new \ArrayIterator()];
+        yield [Type::collection(Type::object(\ArrayIterator::class), Type::mixed(), Type::arrayKey()), new \ArrayIterator()];
         yield [Type::collection(Type::object(\Generator::class), Type::string(), Type::int()), (fn (): iterable => yield 'string')()];
         yield [Type::collection(Type::object($arrayAccess::class)), $arrayAccess];
     }
 
-    /**
-     * @group legacy
-     */
+    #[IgnoreDeprecations]
+    #[Group('legacy')]
     public function testCannotCreateIterableList()
     {
         $this->expectUserDeprecationMessage('Since symfony/type-info 7.3: The third argument of "Symfony\Component\TypeInfo\TypeFactoryTrait::iterable()" is deprecated. Use the "Symfony\Component\TypeInfo\Type::list()" method to create a list instead.');

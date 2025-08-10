@@ -11,11 +11,14 @@
 
 namespace Symfony\Component\Form\Tests\Extension\Core\DataTransformer;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Symfony\Component\Form\Exception\InvalidArgumentException;
 use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\Form\Extension\Core\DataTransformer\BaseDateTimeTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToLocalizedStringTransformer;
 use Symfony\Component\Form\Tests\Extension\Core\DataTransformer\Traits\DateTimeEqualsTrait;
+use Symfony\Component\Intl\Intl;
 use Symfony\Component\Intl\Util\IntlTestHelper;
 
 class DateTimeToLocalizedStringTransformerTest extends BaseDateTimeTransformerTestCase
@@ -91,9 +94,7 @@ class DateTimeToLocalizedStringTransformerTest extends BaseDateTimeTransformerTe
         ];
     }
 
-    /**
-     * @dataProvider dataProvider
-     */
+    #[DataProvider('dataProvider')]
     public function testTransform($dateFormat, $timeFormat, $pattern, $output, $input)
     {
         IntlTestHelper::requireFullIntl($this, '59.1');
@@ -207,9 +208,7 @@ class DateTimeToLocalizedStringTransformerTest extends BaseDateTimeTransformerTe
         // $transformer->transform(1.5);
     }
 
-    /**
-     * @dataProvider dataProvider
-     */
+    #[DataProvider('dataProvider')]
     public function testReverseTransform($dateFormat, $timeFormat, $pattern, $input, $output)
     {
         $transformer = new DateTimeToLocalizedStringTransformer(
@@ -235,6 +234,10 @@ class DateTimeToLocalizedStringTransformerTest extends BaseDateTimeTransformerTe
 
     public function testReverseTransformFromDifferentLocale()
     {
+        if (version_compare(Intl::getIcuVersion(), '71.1', '>')) {
+            $this->markTestSkipped('ICU version 71.1 or lower is required.');
+        }
+
         \Locale::setDefault('en_US');
 
         $transformer = new DateTimeToLocalizedStringTransformer('UTC', 'UTC');
@@ -338,9 +341,7 @@ class DateTimeToLocalizedStringTransformerTest extends BaseDateTimeTransformerTe
         $transformer->reverseTransform('20107-03-21 12:34:56');
     }
 
-    /**
-     * @requires extension intl
-     */
+    #[RequiresPhpExtension('intl')]
     public function testReverseTransformWrapsIntlErrorsWithErrorLevel()
     {
         $errorLevel = ini_set('intl.error_level', \E_WARNING);
@@ -354,9 +355,7 @@ class DateTimeToLocalizedStringTransformerTest extends BaseDateTimeTransformerTe
         }
     }
 
-    /**
-     * @requires extension intl
-     */
+    #[RequiresPhpExtension('intl')]
     public function testReverseTransformWrapsIntlErrorsWithExceptions()
     {
         $initialUseExceptions = ini_set('intl.use_exceptions', 1);
@@ -370,9 +369,7 @@ class DateTimeToLocalizedStringTransformerTest extends BaseDateTimeTransformerTe
         }
     }
 
-    /**
-     * @requires extension intl
-     */
+    #[RequiresPhpExtension('intl')]
     public function testReverseTransformWrapsIntlErrorsWithExceptionsAndErrorLevel()
     {
         $initialUseExceptions = ini_set('intl.use_exceptions', 1);

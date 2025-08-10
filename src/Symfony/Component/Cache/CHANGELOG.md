@@ -1,11 +1,17 @@
 CHANGELOG
 =========
 
+7.4
+---
+
+ * Bump ext-redis to 6.2 and ext-relay to 0.11 minimum
+
 7.3
 ---
 
  * Add support for `\Relay\Cluster` in `RedisAdapter`
  * Add support for `valkey:` / `valkeys:` schemes
+ * Add support for namespace-based invalidation
  * Rename options "redis_cluster" and "redis_sentinel" to "cluster" and "sentinel" respectively
 
 7.2

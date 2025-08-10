@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\Messenger\Bridge\Amqp\Tests\Transport;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Bridge\Amqp\Tests\Fixtures\DummyMessage;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpFactory;
@@ -18,11 +21,8 @@ use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\Connection;
 use Symfony\Component\Messenger\Exception\InvalidArgumentException;
 
-/**
- * @requires extension amqp
- *
- * @group time-sensitive
- */
+#[RequiresPhpExtension('amqp')]
+#[Group('time-sensitive')]
 class ConnectionTest extends TestCase
 {
     private const DEFAULT_EXCHANGE_NAME = 'messages';
@@ -222,9 +222,7 @@ class ConnectionTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider invalidQueueArgumentsDataProvider
-     */
+    #[DataProvider('invalidQueueArgumentsDataProvider')]
     public function testFromDsnWithInvalidValueOnQueueArguments(string $dsn, array $options)
     {
         $this->expectException(InvalidArgumentException::class);
@@ -874,6 +872,55 @@ class ConnectionTest extends TestCase
         $delayQueue->expects($this->once())->method('bind')->with('delays', $delayQueueName);
 
         return Connection::fromDsn('amqp://localhost', [], $factory);
+    }
+
+    public function testGettingDefaultExchange()
+    {
+        $factory = $this->createMock(AmqpFactory::class);
+
+        $amqpExchange = $this->createMock(\AMQPExchange::class);
+        $amqpExchange->expects($this->once())->method('setName')->with('');
+        $amqpExchange->expects($this->once())->method('setType')->with(\AMQP_EX_TYPE_DIRECT);
+        $amqpExchange->expects($this->never())->method('setFlags');
+        $amqpExchange->expects($this->never())->method('setArguments');
+
+        $factory->expects($this->once())->method('createExchange')->willReturn($amqpExchange);
+
+        $connection = new Connection([
+            'host' => 'localhost',
+            'port' => 5672,
+            'vhost' => '/',
+        ], [
+            'name' => '',
+        ], [
+            '' => [],
+        ], $factory);
+
+        $connection->exchange();
+    }
+
+    public function testBindIsNotCalledWhenPublishingInDefaultExchange()
+    {
+        $factory = $this->createMock(AmqpFactory::class);
+
+        $amqpExchange = $this->createMock(\AMQPExchange::class);
+        $amqpExchange->expects($this->never())->method('declareExchange');
+
+        $factory->expects($this->once())->method('createExchange')->willReturn($amqpExchange);
+        $factory->expects($this->once())->method('createQueue')->willReturn($queue = $this->createMock(\AMQPQueue::class));
+        $queue->expects($this->never())->method('bind');
+
+        $connection = new Connection([
+            'host' => 'localhost',
+            'port' => 5672,
+            'vhost' => '/',
+        ], [
+            'name' => '',
+        ], [
+            '' => [],
+        ], $factory);
+
+        $connection->publish('body');
     }
 }
 

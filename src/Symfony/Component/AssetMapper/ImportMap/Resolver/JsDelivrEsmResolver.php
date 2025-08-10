@@ -20,6 +20,7 @@ use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class JsDelivrEsmResolver implements PackageResolverInterface
 {
@@ -28,7 +29,7 @@ final class JsDelivrEsmResolver implements PackageResolverInterface
     public const URL_PATTERN_DIST = self::URL_PATTERN_DIST_CSS.'/+esm';
     public const URL_PATTERN_ENTRYPOINT = 'https://data.jsdelivr.com/v1/packages/npm/%s@%s/entrypoints';
 
-    public const IMPORT_REGEX = '#(?:import\s*(?:[\w$]+,)?(?:(?:\{[^}]*\}|[\w$]+|\*\s*as\s+[\w$]+)\s*\bfrom\s*)?|export\s*(?:\{[^}]*\}|\*)\s*from\s*)("/npm/((?:@[^/]+/)?[^@]+?)(?:@([^/]+))?((?:/[^/]+)*?)/\+esm")#';
+    public const IMPORT_REGEX = '#(?:import\s*(?:[\w$]+,)?(?:(?:\{[^}]*\}|[\w$]+|\*\s*as\s+[\w$]+)\s*\bfrom\s*)?|export\s*(?:\{[^}]*\}|\*)\s*from\s*|await\simport\()("/npm/((?:@[^/]+/)?[^@]+?)(?:@([^/]+))?((?:/[^/]+)*?)/\+esm")(?:\)*)#';
 
     private const ES_MODULE_SHIMS = 'es-module-shims';
 
@@ -165,6 +166,7 @@ final class JsDelivrEsmResolver implements PackageResolverInterface
      */
     public function downloadPackages(array $importMapEntries, ?callable $progressCallback = null): array
     {
+        /** @var array<string, array{0: ResponseInterface, 1: ImportMapEntry}> $responses */
         $responses = [];
         foreach ($importMapEntries as $package => $entry) {
             if (!$entry->isRemotePackage()) {
@@ -196,7 +198,6 @@ final class JsDelivrEsmResolver implements PackageResolverInterface
 
             $dependencies = [];
             $extraFiles = [];
-            /* @var ImportMapEntry $entry */
             $contents[$package] = [
                 'content' => $this->makeImportsBare($response->getContent(), $dependencies, $extraFiles, $entry->type, $entry->getPackagePathString()),
                 'dependencies' => $dependencies,

@@ -80,7 +80,7 @@
         <xsd:attribute name="field-name" type="xsd:string" />
     </xsd:complexType>
 
-    <xsd:complexType name="field_attr">
+    <xsd:complexType name="field_attr" mixed="true">
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
 
@@ -338,6 +338,7 @@
     <xsd:simpleType name="email-validation-mode">
         <xsd:restriction base="xsd:string">
             <xsd:enumeration value="html5" />
+            <xsd:enumeration value="html5-allow-no-tld" />
             <xsd:enumeration value="loose" />
             <xsd:enumeration value="strict" />
         </xsd:restriction>
@@ -449,6 +450,7 @@
             <xsd:element name="initial-marking" type="xsd:string" minOccurs="0" maxOccurs="unbounded" />
             <xsd:element name="marking-store" type="marking_store" minOccurs="0" maxOccurs="1" />
             <xsd:element name="support" type="xsd:string" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:element name="definition-validator" type="xsd:string" minOccurs="0" maxOccurs="unbounded" />
             <xsd:element name="event-to-dispatch" type="event_to_dispatch" minOccurs="0" maxOccurs="unbounded" />
             <xsd:element name="place" type="place" minOccurs="0" maxOccurs="unbounded" />
             <xsd:element name="transition" type="transition" minOccurs="0" maxOccurs="unbounded" />
@@ -855,7 +857,7 @@
     </xsd:complexType>
 
     <xsd:complexType name="mailer_smime_encrypter">
-        <xsd:attribute name="certificate" type="xsd:string"/>
+        <xsd:attribute name="repository" type="xsd:string" />
         <xsd:attribute name="cipher" type="xsd:integer" />
     </xsd:complexType>
 

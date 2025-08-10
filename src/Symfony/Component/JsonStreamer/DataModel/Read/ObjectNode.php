@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\JsonStreamer\DataModel\Read;
 
-use Symfony\Component\JsonStreamer\DataModel\DataAccessorInterface;
 use Symfony\Component\TypeInfo\Type\ObjectType;
 use Symfony\Component\TypeInfo\Type\UnionType;
 
@@ -25,16 +24,16 @@ use Symfony\Component\TypeInfo\Type\UnionType;
 final class ObjectNode implements DataModelNodeInterface
 {
     /**
-     * @param array<string, array{name: string, value: DataModelNodeInterface, accessor: callable(DataAccessorInterface): DataAccessorInterface}> $properties
+     * @param array<string, array{name: string, value: DataModelNodeInterface, accessor: callable(string): string}> $properties
      */
     public function __construct(
         private ObjectType $type,
         private array $properties,
-        private bool $ghost = false,
+        private bool $mock = false,
     ) {
     }
 
-    public static function createGhost(ObjectType|UnionType $type): self
+    public static function createMock(ObjectType|UnionType $type): self
     {
         return new self($type, [], true);
     }
@@ -50,15 +49,15 @@ final class ObjectNode implements DataModelNodeInterface
     }
 
     /**
-     * @return array<string, array{name: string, value: DataModelNodeInterface, accessor: callable(DataAccessorInterface): DataAccessorInterface}>
+     * @return array<string, array{name: string, value: DataModelNodeInterface, accessor: callable(string): string}>
      */
     public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function isGhost(): bool
+    public function isMock(): bool
     {
-        return $this->ghost;
+        return $this->mock;
     }
 }

@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\JsonStreamer\Tests\Write;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\JsonStreamer\Exception\UnsupportedException;
 use Symfony\Component\JsonStreamer\Mapping\GenericTypePropertyMetadataLoader;
@@ -21,10 +22,14 @@ use Symfony\Component\JsonStreamer\Mapping\Write\DateTimeTypePropertyMetadataLoa
 use Symfony\Component\JsonStreamer\Tests\Fixtures\Enum\DummyBackedEnum;
 use Symfony\Component\JsonStreamer\Tests\Fixtures\Enum\DummyEnum;
 use Symfony\Component\JsonStreamer\Tests\Fixtures\Model\ClassicDummy;
+use Symfony\Component\JsonStreamer\Tests\Fixtures\Model\DummyWithArray;
+use Symfony\Component\JsonStreamer\Tests\Fixtures\Model\DummyWithDollarNamedProperties;
 use Symfony\Component\JsonStreamer\Tests\Fixtures\Model\DummyWithNameAttributes;
+use Symfony\Component\JsonStreamer\Tests\Fixtures\Model\DummyWithNestedArray;
 use Symfony\Component\JsonStreamer\Tests\Fixtures\Model\DummyWithOtherDummies;
 use Symfony\Component\JsonStreamer\Tests\Fixtures\Model\DummyWithUnionProperties;
 use Symfony\Component\JsonStreamer\Tests\Fixtures\Model\DummyWithValueTransformerAttributes;
+use Symfony\Component\JsonStreamer\Tests\Fixtures\Model\SelfReferencingDummy;
 use Symfony\Component\JsonStreamer\Tests\Fixtures\ValueTransformer\BooleanToStringValueTransformer;
 use Symfony\Component\JsonStreamer\Tests\Fixtures\ValueTransformer\DoubleIntAndCastToStringValueTransformer;
 use Symfony\Component\JsonStreamer\Tests\ServiceContainer;
@@ -50,9 +55,7 @@ class StreamWriterGeneratorTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider generatedStreamWriterDataProvider
-     */
+    #[DataProvider('generatedStreamWriterDataProvider')]
     public function testGeneratedStreamWriter(string $fixture, Type $type)
     {
         $propertyMetadataLoader = new GenericTypePropertyMetadataLoader(
@@ -92,6 +95,8 @@ class StreamWriterGeneratorTest extends TestCase
         yield ['null_list', Type::list(Type::null())];
         yield ['object_list', Type::list(Type::object(DummyWithNameAttributes::class))];
         yield ['nullable_object_list', Type::nullable(Type::list(Type::object(DummyWithNameAttributes::class)))];
+        yield ['nested_list', Type::list(Type::object(DummyWithArray::class))];
+        yield ['double_nested_list', Type::list(Type::object(DummyWithNestedArray::class))];
 
         yield ['dict', Type::dict()];
         yield ['object_dict', Type::dict(Type::object(DummyWithNameAttributes::class))];
@@ -104,6 +109,8 @@ class StreamWriterGeneratorTest extends TestCase
         yield ['nullable_object', Type::nullable(Type::object(DummyWithNameAttributes::class))];
         yield ['object_in_object', Type::object(DummyWithOtherDummies::class)];
         yield ['object_with_value_transformer', Type::object(DummyWithValueTransformerAttributes::class)];
+        yield ['self_referencing_object', Type::object(SelfReferencingDummy::class)];
+        yield ['object_with_dollar_named_properties', Type::object(DummyWithDollarNamedProperties::class)];
 
         yield ['union', Type::union(Type::int(), Type::list(Type::enum(DummyBackedEnum::class)), Type::object(DummyWithNameAttributes::class))];
         yield ['object_with_union', Type::object(DummyWithUnionProperties::class)];
@@ -138,7 +145,8 @@ class StreamWriterGeneratorTest extends TestCase
             ->method('load')
             ->with(self::class, [], [
                 'original_type' => $type,
-                'depth' => 1,
+                'generated_classes' => [self::class => true],
+                'depth' => 0,
             ])
             ->willReturn([]);
 

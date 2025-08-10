@@ -13,9 +13,11 @@ namespace Symfony\Component\Console\Attribute;
 
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\Suggestion;
+use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\String\UnicodeString;
 
 #[\Attribute(\Attribute::TARGET_PARAMETER)]
 class Argument
@@ -25,6 +27,8 @@ class Argument
     private string|bool|int|float|array|null $default = null;
     private array|\Closure $suggestedValues;
     private ?int $mode = null;
+    private string $function = '';
+    private string $typeName = '';
 
     /**
      * Represents a console command <argument> definition.
@@ -34,8 +38,8 @@ class Argument
      * @param array<string|Suggestion>|callable(CompletionInput):list<string|Suggestion> $suggestedValues The values used for input completion
      */
     public function __construct(
-        public string $name = '',
         public string $description = '',
+        public string $name = '',
         array|callable $suggestedValues = [],
     ) {
         $this->suggestedValues = \is_callable($suggestedValues) ? $suggestedValues(...) : $suggestedValues;
@@ -51,32 +55,45 @@ class Argument
             return null;
         }
 
+        if (($function = $parameter->getDeclaringFunction()) instanceof \ReflectionMethod) {
+            $self->function = $function->class.'::'.$function->name;
+        } else {
+            $self->function = $function->name;
+        }
+
         $type = $parameter->getType();
         $name = $parameter->getName();
 
         if (!$type instanceof \ReflectionNamedType) {
-            throw new LogicException(\sprintf('The parameter "$%s" must have a named type. Untyped, Union or Intersection types are not supported for command arguments.', $name));
+            throw new LogicException(\sprintf('The parameter "$%s" of "%s()" must have a named type. Untyped, Union or Intersection types are not supported for command arguments.', $name, $self->function));
         }
 
-        $parameterTypeName = $type->getName();
+        $self->typeName = $type->getName();
+        $isBackedEnum = is_subclass_of($self->typeName, \BackedEnum::class);
 
-        if (!\in_array($parameterTypeName, self::ALLOWED_TYPES, true)) {
-            throw new LogicException(\sprintf('The type "%s" of parameter "$%s" is not supported as a command argument. Only "%s" types are allowed.', $parameterTypeName, $name, implode('", "', self::ALLOWED_TYPES)));
+        if (!\in_array($self->typeName, self::ALLOWED_TYPES, true) && !$isBackedEnum) {
+            throw new LogicException(\sprintf('The type "%s" on parameter "$%s" of "%s()" is not supported as a command argument. Only "%s" types and backed enums are allowed.', $self->typeName, $name, $self->function, implode('", "', self::ALLOWED_TYPES)));
         }
 
         if (!$self->name) {
-            $self->name = $name;
+            $self->name = (new UnicodeString($name))->kebab();
         }
 
-        $self->default = $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
+        if ($parameter->isDefaultValueAvailable()) {
+            $self->default = $parameter->getDefaultValue() instanceof \BackedEnum ? $parameter->getDefaultValue()->value : $parameter->getDefaultValue();
+        }
 
         $self->mode = $parameter->isDefaultValueAvailable() || $parameter->allowsNull() ? InputArgument::OPTIONAL : InputArgument::REQUIRED;
-        if ('array' === $parameterTypeName) {
+        if ('array' === $self->typeName) {
             $self->mode |= InputArgument::IS_ARRAY;
         }
 
         if (\is_array($self->suggestedValues) && !\is_callable($self->suggestedValues) && 2 === \count($self->suggestedValues) && ($instance = $parameter->getDeclaringFunction()->getClosureThis()) && $instance::class === $self->suggestedValues[0] && \is_callable([$instance, $self->suggestedValues[1]])) {
             $self->suggestedValues = [$instance, $self->suggestedValues[1]];
+        }
+
+        if ($isBackedEnum && !$self->suggestedValues) {
+            $self->suggestedValues = array_column(($self->typeName)::cases(), 'value');
         }
 
         return $self;
@@ -97,6 +114,12 @@ class Argument
      */
     public function resolveValue(InputInterface $input): mixed
     {
-        return $input->getArgument($this->name);
+        $value = $input->getArgument($this->name);
+
+        if (is_subclass_of($this->typeName, \BackedEnum::class) && (\is_string($value) || \is_int($value))) {
+            return ($this->typeName)::tryFrom($value) ?? throw InvalidArgumentException::fromEnumValue($this->name, $value, $this->suggestedValues);
+        }
+
+        return $value;
     }
 }
