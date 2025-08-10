@@ -32,9 +32,9 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 abstract class AbstractTransport implements TransportInterface
 {
     private LoggerInterface $logger;
-    private ?RateLimiterFactoryInterface $rateLimiterFactory = null;
     private float $rate = 0;
     private float $lastSent = 0;
+    private ?RateLimiterFactoryInterface $rateLimiterFactory = null;
 
     public function __construct(
         private ?EventDispatcherInterface $dispatcher = null,
