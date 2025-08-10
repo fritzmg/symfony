@@ -2787,10 +2787,6 @@ class FrameworkExtension extends Extension
 
         foreach ($transports as $name => $transport) {
             if ($transport['rate_limiter']) {
-                if (!interface_exists(LimiterInterface::class)) {
-                    throw new LogicException('Rate limiter cannot be used within Mailer as the RateLimiter component is not installed. Try running "composer require symfony/rate-limiter".');
-                }
-
                 $transportRateLimiterReferences[$name] = new Reference('limiter.'.$transport['rate_limiter']);
             }
         }
@@ -2798,6 +2794,10 @@ class FrameworkExtension extends Extension
         if (!$transportRateLimiterReferences) {
             $container->removeDefinition('mailer.rate_limiter_locator');
         } else {
+            if (!interface_exists(LimiterInterface::class)) {
+                throw new LogicException('Rate limiter cannot be used within Mailer as the RateLimiter component is not installed. Try running "composer require symfony/rate-limiter".');
+            }
+
             $container->getDefinition('mailer.rate_limiter_locator')
                 ->replaceArgument(0, $transportRateLimiterReferences);
         }
