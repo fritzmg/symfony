@@ -2876,15 +2876,14 @@ class FrameworkExtension extends Extension
             }
         }
 
-        if (!$transportRateLimiterReferences) {
-            $container->removeDefinition('mailer.rate_limiter_locator');
-        } else {
+        if ($transportRateLimiterReferences && $this->readConfigEnabled('rate_limiter', $container, $config['rate_limmiter'])) {
             if (!interface_exists(LimiterInterface::class)) {
                 throw new LogicException('Rate limiter cannot be used within Mailer as the RateLimiter component is not installed. Try running "composer require symfony/rate-limiter".');
             }
 
-            $container->getDefinition('mailer.rate_limiter_locator')
-                ->replaceArgument(0, $transportRateLimiterReferences);
+            $container->getDefinition('mailer.rate_limiter_locator')->replaceArgument(0, $transportRateLimiterReferences);
+        } else {
+            $container->removeDefinition('mailer.rate_limiter_locator');
         }
 
         $mailer = $container->getDefinition('mailer.mailer');
