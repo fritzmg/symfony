@@ -75,6 +75,7 @@ use Symfony\Component\Messenger\Transport\TransportFactory;
 use Symfony\Component\Notifier\ChatterInterface;
 use Symfony\Component\Notifier\TexterInterface;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
+use Symfony\Component\RateLimiter\LimiterInterface;
 use Symfony\Component\Security\Core\AuthenticationEvents;
 use Symfony\Component\Serializer\DependencyInjection\SerializerPass;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
@@ -2258,6 +2259,16 @@ abstract class FrameworkExtensionTestCase extends TestCase
         $container = $this->createContainerFromFile('mailer_with_specific_message_bus');
 
         $this->assertEquals(new Reference('app.another_bus'), $container->getDefinition('mailer.mailer')->getArgument(1));
+    }
+
+    public function testMailerRateLimiter()
+    {
+        $container = $this->createContainerFromFile('mailer_with_rate_limiter');
+
+        $this->assertTrue($container->hasDefinition('mailer.rate_limiter_locator'));
+        $l = $container->getDefinition('mailer.rate_limiter_locator');
+        $this->assertCount(1, $l->getArguments());
+        $this->assertEquals(new Reference('limiter.foo_limiter', ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE), $l->getArgument(0)['main']);
     }
 
     public function testHttpClientMockResponseFactory()

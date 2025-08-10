@@ -2867,12 +2867,20 @@ class FrameworkExtension extends Extension
             $config['dsn'] = 'smtp://null';
         }
         $transports = $config['dsn'] ? ['main' => $config['dsn']] : $config['transports'];
-        $container->getDefinition('mailer.transports')->setArgument(0, array_combine(array_keys($config['transports']), array_column($config['transports'], 'dsn')));
+        $transports = array_map(static function (array|string $transport): array {
+            if (\is_array($transport)) {
+                return $transport;
+            }
+
+            return ['dsn' => $transport];
+        }, $transports);
+
+        $container->getDefinition('mailer.transports')->setArgument(0, array_combine(array_keys($transports), array_column($transports, 'dsn')));
 
         $transportRateLimiterReferences = [];
 
         foreach ($transports as $name => $transport) {
-            if ($transport['rate_limiter']) {
+            if ($transport['rate_limiter'] ?? null) {
                 $transportRateLimiterReferences[$name] = new Reference('limiter.'.$transport['rate_limiter']);
             }
         }
