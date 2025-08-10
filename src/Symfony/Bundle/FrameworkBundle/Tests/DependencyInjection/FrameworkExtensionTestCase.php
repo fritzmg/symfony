@@ -75,7 +75,6 @@ use Symfony\Component\Messenger\Transport\TransportFactory;
 use Symfony\Component\Notifier\ChatterInterface;
 use Symfony\Component\Notifier\TexterInterface;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
-use Symfony\Component\RateLimiter\LimiterInterface;
 use Symfony\Component\Security\Core\AuthenticationEvents;
 use Symfony\Component\Serializer\DependencyInjection\SerializerPass;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
