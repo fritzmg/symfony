@@ -2876,7 +2876,7 @@ class FrameworkExtension extends Extension
             }
         }
 
-        if ($transportRateLimiterReferences && $this->readConfigEnabled('rate_limiter', $container, $config['rate_limmiter'])) {
+        if ($transportRateLimiterReferences && $this->readConfigEnabled('rate_limiter', $container, $config['rate_limiter'])) {
             if (!interface_exists(LimiterInterface::class)) {
                 throw new LogicException('Rate limiter cannot be used within Mailer as the RateLimiter component is not installed. Try running "composer require symfony/rate-limiter".');
             }
