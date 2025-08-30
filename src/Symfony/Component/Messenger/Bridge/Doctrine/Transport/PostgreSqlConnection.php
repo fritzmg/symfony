@@ -33,12 +33,12 @@ final class PostgreSqlConnection extends Connection
         'get_notify_timeout' => 0,
     ];
 
-    public function __sleep(): array
+    public function __serialize(): array
     {
         throw new \BadMethodCallException('Cannot serialize '.__CLASS__);
     }
 
-    public function __wakeup(): void
+    public function __unserialize(array $data): void
     {
         throw new \BadMethodCallException('Cannot unserialize '.__CLASS__);
     }
@@ -112,14 +112,16 @@ final class PostgreSqlConnection extends Connection
         return [
             // create trigger function
             \sprintf(<<<'SQL'
-CREATE OR REPLACE FUNCTION %1$s() RETURNS TRIGGER AS $$
-    BEGIN
-        PERFORM pg_notify('%2$s', NEW.queue_name::text);
-        RETURN NEW;
-    END;
-$$ LANGUAGE plpgsql;
-SQL
-                , $functionName, $this->configuration['table_name']),
+                CREATE OR REPLACE FUNCTION %1$s() RETURNS TRIGGER AS $$
+                    BEGIN
+                        PERFORM pg_notify('%2$s', NEW.queue_name::text);
+                        RETURN NEW;
+                    END;
+                $$ LANGUAGE plpgsql;
+                SQL,
+                $functionName,
+                $this->configuration['table_name']
+            ),
             // register trigger
             \sprintf('DROP TRIGGER IF EXISTS notify_trigger ON %s;', $this->configuration['table_name']),
             \sprintf('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON %1$s FOR EACH ROW EXECUTE PROCEDURE %2$s();', $this->configuration['table_name'], $functionName),

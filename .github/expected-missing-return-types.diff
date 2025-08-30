@@ -187,6 +187,23 @@ diff --git a/src/Symfony/Component/DependencyInjection/Extension/PrependExtensio
 -    public function prepend(ContainerBuilder $container);
 +    public function prepend(ContainerBuilder $container): void;
  }
+diff --git a/src/Symfony/Component/DomCrawler/Crawler.php b/src/Symfony/Component/DomCrawler/Crawler.php
+--- a/src/Symfony/Component/DomCrawler/Crawler.php
++++ b/src/Symfony/Component/DomCrawler/Crawler.php
+@@ -405,5 +405,5 @@ class Crawler implements \Countable, \IteratorAggregate
+      * @throws \InvalidArgumentException When current node is empty
+      */
+-    public function closest(string $selector): ?self
++    public function closest(string $selector): ?static
+     {
+         if (!$this->nodes) {
+@@ -646,5 +646,5 @@ class Crawler implements \Countable, \IteratorAggregate
+      * @return array|static
+      */
+-    public function evaluate(string $xpath): array|self
++    public function evaluate(string $xpath): array|static
+     {
+         if (null === $this->document) {
 diff --git a/src/Symfony/Component/Emoji/EmojiTransliterator.php b/src/Symfony/Component/Emoji/EmojiTransliterator.php
 --- a/src/Symfony/Component/Emoji/EmojiTransliterator.php
 +++ b/src/Symfony/Component/Emoji/EmojiTransliterator.php

@@ -30,9 +30,10 @@ $fileHeaderParts = [
 return (new PhpCsFixer\Config())
     ->setParallelConfig(PhpCsFixer\Runner\Parallel\ParallelConfigFactory::detect())
     ->setRules([
+        '@PHP81Migration' => true, // take lowest version from `git grep -h '"php"' **/composer.json | uniq | sort`
+        '@PHPUnit91Migration:risky' => true, // take version from src/Symfony/Bridge/PhpUnit/phpunit.xml.dist#L4
         '@Symfony' => true,
         '@Symfony:risky' => true,
-        'phpdoc_var_annotation_correct_order' => true,
         'protected_to_private' => false,
         'header_comment' => [
             'header' => implode('', $fileHeaderParts),

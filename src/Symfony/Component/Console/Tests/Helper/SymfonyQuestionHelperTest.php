@@ -154,13 +154,15 @@ class SymfonyQuestionHelperTest extends AbstractQuestionHelperTestCase
         );
 
         $this->assertOutputContains(<<<EOT
- qqq:
-  [foo   ] foo
-  [żółw  ] bar
-  [łabądź] baz
- >
-EOT
-            , $output, true);
+             qqq:
+              [foo   ] foo
+              [żółw  ] bar
+              [łabądź] baz
+             >
+            EOT,
+            $output,
+            true
+        );
     }
 
     public function testChoiceQuestionCustomPrompt()
@@ -175,11 +177,13 @@ EOT
         );
 
         $this->assertOutputContains(<<<EOT
- qqq:
-  [0] foo
- >ccc>
-EOT
-            , $output, true);
+             qqq:
+              [0] foo
+             >ccc>
+            EOT,
+            $output,
+            true
+        );
     }
 
     protected function getInputStream($input)

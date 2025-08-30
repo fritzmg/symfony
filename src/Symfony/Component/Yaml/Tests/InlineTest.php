@@ -58,6 +58,7 @@ class InlineTest extends TestCase
             ['{ foo: !php/const PHP_INT_MAX }', ['foo' => \PHP_INT_MAX]],
             ['{ !php/const PHP_INT_MAX: foo }', [\PHP_INT_MAX => 'foo']],
             ['!php/const NULL', null],
+            ['{ !php/const Symfony\Component\Yaml\Yaml::PARSE_CONSTANT: foo }', [Yaml::PARSE_CONSTANT => 'foo']],
         ];
     }
 
@@ -325,8 +326,8 @@ class InlineTest extends TestCase
             ['123.45_67', 123.4567],
             ['0x4D2', 0x4D2],
             ['0x_4_D_2_', 0x4D2],
-            ['0o2333', 02333],
-            ['0o_2_3_3_3', 02333],
+            ['0o2333', 0o2333],
+            ['0o_2_3_3_3', 0o2333],
             ['.Inf', -log(0)],
             ['-.Inf', log(0)],
             ["'686e444'", '686e444'],
@@ -408,7 +409,7 @@ class InlineTest extends TestCase
             ["'quoted string'", 'quoted string'],
             ['12.30e+02', 12.30e+02],
             ['0x4D2', 0x4D2],
-            ['0o2333', 02333],
+            ['0o2333', 0o2333],
             ['.Inf', -log(0)],
             ['-.Inf', log(0)],
             ["'686e444'", '686e444'],
@@ -490,7 +491,7 @@ class InlineTest extends TestCase
             ['1230.0', 12.30e+02],
             ['1.23E+45', 12.30e+44],
             ['1234', 0x4D2],
-            ['1243', 02333],
+            ['1243', 0o2333],
             ["'0x_4_D_2_'", '0x_4_D_2_'],
             ["'0_2_3_3_3'", '0_2_3_3_3'],
             ['.Inf', -log(0)],
@@ -556,7 +557,7 @@ class InlineTest extends TestCase
     }
 
     #[DataProvider('getTimestampTests')]
-    public function testParseTimestampAsUnixTimestampByDefault(string $yaml, int $year, int $month, int $day, int $hour, int $minute, int $second, int $microsecond)
+    public function testParseTimestampAsUnixTimestampByDefault(string $yaml, int $year, int $month, int $day, int $hour, int $minute, int $second, int $microsecond, string $timezone)
     {
         $expectedDate = (new \DateTimeImmutable($yaml, new \DateTimeZone('UTC')))->format('U');
         $this->assertSame($microsecond ? (float) "$expectedDate.$microsecond" : (int) $expectedDate, Inline::parse($yaml));
@@ -586,7 +587,7 @@ class InlineTest extends TestCase
     }
 
     #[DataProvider('getTimestampTests')]
-    public function testParseNestedTimestampListAsDateTimeObject(string $yaml, int $year, int $month, int $day, int $hour, int $minute, int $second, int $microsecond)
+    public function testParseNestedTimestampListAsDateTimeObject(string $yaml, int $year, int $month, int $day, int $hour, int $minute, int $second, int $microsecond, string $timezone)
     {
         $expected = (new \DateTimeImmutable($yaml))
             ->setTimeZone(new \DateTimeZone('UTC'))
@@ -1077,8 +1078,8 @@ class InlineTest extends TestCase
     public function testParseQuotedReferenceLikeStringsInMapping()
     {
         $yaml = <<<YAML
-{foo: '&foo', bar: "&bar", baz: !!str '&baz'}
-YAML;
+            {foo: '&foo', bar: "&bar", baz: !!str '&baz'}
+            YAML;
 
         $this->assertSame(['foo' => '&foo', 'bar' => '&bar', 'baz' => '&baz'], Inline::parse($yaml));
     }
@@ -1086,8 +1087,8 @@ YAML;
     public function testParseQuotedReferenceLikeStringsInSequence()
     {
         $yaml = <<<YAML
-['&foo', "&bar", !!str '&baz']
-YAML;
+            ['&foo', "&bar", !!str '&baz']
+            YAML;
 
         $this->assertSame(['&foo', '&bar', '&baz'], Inline::parse($yaml));
     }

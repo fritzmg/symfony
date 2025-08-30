@@ -83,6 +83,7 @@ use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\Glob;
+use Symfony\Component\Form\EnumFormTypeGuesser;
 use Symfony\Component\Form\Extension\HtmlSanitizer\Type\TextTypeHtmlSanitizerExtension;
 use Symfony\Component\Form\Form;
 use Symfony\Component\Form\FormTypeExtensionInterface;
@@ -172,6 +173,7 @@ use Symfony\Component\RateLimiter\Storage\CacheStorage;
 use Symfony\Component\RemoteEvent\Attribute\AsRemoteEventConsumer;
 use Symfony\Component\RemoteEvent\RemoteEvent;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Loader\AttributeServicesLoader;
 use Symfony\Component\Scheduler\Attribute\AsCronTask;
 use Symfony\Component\Scheduler\Attribute\AsPeriodicTask;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
@@ -470,7 +472,7 @@ class FrameworkExtension extends Extension
         }
 
         if ($typeInfoEnabled = $this->readConfigEnabled('type_info', $container, $config['type_info'])) {
-            $this->registerTypeInfoConfiguration($container, $loader);
+            $this->registerTypeInfoConfiguration($config['type_info'], $container, $loader);
         }
 
         if ($propertyInfoEnabled) {
@@ -769,7 +771,7 @@ class FrameworkExtension extends Extension
             $definition->addTag('controller.service_arguments');
         });
         $container->registerAttributeForAutoconfiguration(Route::class, static function (ChildDefinition $definition, Route $attribute, \ReflectionClass|\ReflectionMethod $reflection): void {
-            $definition->addTag('controller.service_arguments');
+            $definition->addTag('controller.service_arguments')->addTag('routing.controller');
         });
         $container->registerAttributeForAutoconfiguration(AsRemoteEventConsumer::class, static function (ChildDefinition $definition, AsRemoteEventConsumer $attribute): void {
             $definition->addTag('remote_event.consumer', ['consumer' => $attribute->name]);
@@ -880,6 +882,10 @@ class FrameworkExtension extends Extension
     private function registerFormConfiguration(array $config, ContainerBuilder $container, PhpFileLoader $loader): void
     {
         $loader->load('form.php');
+
+        if (!class_exists(EnumFormTypeGuesser::class)) {
+            $container->removeDefinition('form.type_guesser.enum_type');
+        }
 
         if (null === $config['form']['csrf_protection']['enabled']) {
             $this->writeConfigEnabled('form.csrf_protection', $config['csrf_protection']['enabled'], $config['form']['csrf_protection']);
@@ -1108,7 +1114,7 @@ class FrameworkExtension extends Extension
                         $guardsConfiguration[$eventName][] = $configuration;
                     }
                     if ($transition['metadata']) {
-                        $transitionsMetadataDefinition->addMethodCall('attach', [
+                        $transitionsMetadataDefinition->addMethodCall('offsetSet', [
                             new Reference($transitionId),
                             $transition['metadata'],
                         ]);
@@ -1128,7 +1134,7 @@ class FrameworkExtension extends Extension
                                 $guardsConfiguration[$eventName][] = $configuration;
                             }
                             if ($transition['metadata']) {
-                                $transitionsMetadataDefinition->addMethodCall('attach', [
+                                $transitionsMetadataDefinition->addMethodCall('offsetSet', [
                                     new Reference($transitionId),
                                     $transition['metadata'],
                                 ]);
@@ -1307,6 +1313,10 @@ class FrameworkExtension extends Extension
         }
 
         $loader->load('routing.php');
+
+        if (!class_exists(AttributeServicesLoader::class)) {
+            $container->removeDefinition('routing.loader.attribute.services');
+        }
 
         if ($config['utf8']) {
             $container->getDefinition('routing.loader')->replaceArgument(1, ['utf8' => true]);
@@ -2171,7 +2181,7 @@ class FrameworkExtension extends Extension
         }
     }
 
-    private function registerTypeInfoConfiguration(ContainerBuilder $container, PhpFileLoader $loader): void
+    private function registerTypeInfoConfiguration(array $config, ContainerBuilder $container, PhpFileLoader $loader): void
     {
         if (!class_exists(Type::class)) {
             throw new LogicException('TypeInfo support cannot be enabled as the TypeInfo component is not installed. Try running "composer require symfony/type-info".');
@@ -2180,7 +2190,8 @@ class FrameworkExtension extends Extension
         $loader->load('type_info.php');
 
         if (ContainerBuilder::willBeAvailable('phpstan/phpdoc-parser', PhpDocParser::class, ['symfony/framework-bundle', 'symfony/type-info'])) {
-            $container->register('type_info.resolver.string', StringTypeResolver::class);
+            $container->register('type_info.resolver.string', StringTypeResolver::class)
+                ->setArguments([null, null, $config['aliases']]);
 
             $container->register('type_info.resolver.reflection_parameter.phpdoc_aware', PhpDocAwareReflectionTypeResolver::class)
                 ->setArguments([new Reference('type_info.resolver.reflection_parameter'), new Reference('type_info.resolver.string'), new Reference('type_info.type_context_factory')]);
@@ -2197,6 +2208,8 @@ class FrameworkExtension extends Extension
                 \ReflectionProperty::class => new Reference('type_info.resolver.reflection_property.phpdoc_aware'),
                 \ReflectionFunctionAbstract::class => new Reference('type_info.resolver.reflection_return.phpdoc_aware'),
             ] + $resolversLocator->getValues());
+
+            $container->getDefinition('type_info.type_context_factory')->replaceArgument(1, $config['aliases']);
         }
     }
 

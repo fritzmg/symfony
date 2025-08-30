@@ -27,7 +27,7 @@ jobs:
       matrix:
         include:
           - php: '8.2'
-          - php: '8.2'
+          - php: '8.4'
             mode: high-deps
           - php: '8.2'
             mode: low-deps
@@ -255,7 +255,7 @@ jobs:
 
       - name: Run PhpUnitBridge tests with PHPUnit 9.6
         if: '! matrix.mode'
-        run: |
-          ./phpunit src/Symfony/Bridge/PhpUnit
         env:
           SYMFONY_PHPUNIT_VERSION: '9.6'
+        run: |
+          ./phpunit src/Symfony/Bridge/PhpUnit

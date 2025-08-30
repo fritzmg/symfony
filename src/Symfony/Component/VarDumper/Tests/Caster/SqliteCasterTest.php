@@ -30,12 +30,14 @@ class SqliteCasterTest extends TestCase
 
         $this->assertDumpMatchesFormat(
             <<<'EODUMP'
-SQLite3Result {
-  columnNames: array:2 [
-    0 => "id"
-    1 => "bar"
-  ]
-}
-EODUMP, $result);
+                SQLite3Result {
+                  columnNames: array:2 [
+                    0 => "id"
+                    1 => "bar"
+                  ]
+                }
+                EODUMP,
+            $result
+        );
     }
 }

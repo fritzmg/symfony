@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     env:
-      php-version: '8.2'
+      php-version: '8.4'
     steps:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -50,10 +50,6 @@ jobs:
           git checkout composer.json
           git checkout -m ${{ github.base_ref }}
 
-          # @todo intersection types are broken in Psalm
-          # @see https://github.com/vimeo/psalm/issues/7520
-          sed -i 's/Uuid&/Uuid|/' src/Symfony/Component/Uid/Factory/TimeBasedUuidFactory.php
-          sed -i 's/Interface&/Interface|/' src/Symfony/Component/HttpFoundation/Session/Storage/Handler/MigratingSessionHandler.php
           ./vendor/bin/psalm.phar --set-baseline=.github/psalm/psalm.baseline.xml --no-progress
           git checkout -m FETCH_HEAD
 

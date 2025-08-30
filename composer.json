@@ -54,7 +54,8 @@
         "symfony/polyfill-intl-idn": "^1.10",
         "symfony/polyfill-intl-normalizer": "~1.0",
         "symfony/polyfill-mbstring": "~1.0",
-        "symfony/polyfill-php83": "^1.28",
+        "symfony/polyfill-php83": "^1.29",
+        "symfony/polyfill-php84": "^1.30",
         "symfony/polyfill-php85": "^1.32",
         "symfony/polyfill-uuid": "^1.15"
     },
@@ -157,7 +158,7 @@
         "seld/jsonlint": "^1.10",
         "symfony/amphp-http-client-meta": "^1.0|^2.0",
         "symfony/mercure-bundle": "^0.3",
-        "symfony/phpunit-bridge": "^6.4|^7.0|^8.0",
+        "symfony/phpunit-bridge": "^7.4|^8.0",
         "symfony/runtime": "self.version",
         "symfony/security-acl": "~2.8|~3.0",
         "symfony/webpack-encore-bundle": "^1.0|^2.0",

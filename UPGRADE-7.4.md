@@ -8,6 +8,11 @@ Read more about this in the [Symfony documentation](https://symfony.com/doc/7.4/
 
 If you're upgrading from a version below 7.3, follow the [7.3 upgrade guide](UPGRADE-7.3.md) first.
 
+BrowserKit
+----------
+
+ * Deprecate `AbstractBrowser::useHtml5Parser()`; Symfony 8 will unconditionally use the native HTML5 parser
+
 Cache
 -----
 
@@ -16,7 +21,7 @@ Cache
 Console
 -------
 
- * Deprecate `Symfony\Component\Console\Application::add()` in favor of `Symfony\Component\Console\Application::addCommand()`
+ * Deprecate `Symfony\Component\Console\Application::add()` in favor of `addCommand()`
 
 DependencyInjection
 -------------------
@@ -29,10 +34,23 @@ DoctrineBridge
 
  * Deprecate `UniqueEntity::getRequiredOptions()` and `UniqueEntity::getDefaultOption()`
 
+DomCrawler
+----------
+
+ * Disabling HTML5 parsing is deprecated; Symfony 8 will unconditionally use the native HTML5 parser
+
 FrameworkBundle
 ---------------
 
- * Deprecate `Symfony\Bundle\FrameworkBundle\Console\Application::add()` in favor of `Symfony\Bundle\FrameworkBundle\Console\Application::addCommand()`
+ * Deprecate `Symfony\Bundle\FrameworkBundle\Console\Application::add()` in favor of `addCommand()`
+
+HtmlSanitizer
+-------------
+
+ * Use the native HTML5 parser when using PHP 8.4+
+ * Deprecate `MastermindsParser`; use `NativeParser` instead
+ * [BC BREAK] `ParserInterface::parse()` can now return `\Dom\Node|\DOMNode|null` instead of just `\DOMNode|null`
+ * Add argument `$context` to `ParserInterface::parse()`
 
 HttpClient
 ----------
@@ -43,6 +61,25 @@ HttpFoundation
 --------------
 
  * Deprecate using `Request::sendHeaders()` after headers have already been sent; use a `StreamedResponse` instead
+ * Add argument `$subtypeFallback` to `Request::getFormat()`
+
+HttpKernel
+----------
+
+ * Deprecate implementing `__sleep/wakeup()` on kernels; use `__(un)serialize()` instead
+ * Deprecate implementing `__sleep/wakeup()` on data collectors; use `__(un)serialize()` instead
+ * Make `Profile` final and `Profiler::__sleep()` internal
+
+Mime
+----
+
+ * Deprecate implementing `__sleep/wakeup()` on `AbstractPart` implementations; use `__(un)serialize()` instead
+
+Routing
+-------
+
+ * Deprecate class aliases in the `Annotation` namespace, use attributes instead
+ * Deprecate getters and setters in attribute classes in favor of public properties
 
 Security
 --------
@@ -50,6 +87,18 @@ Security
  * Deprecate callable firewall listeners, extend `AbstractListener` or implement `FirewallListenerInterface` instead
  * Deprecate `AbstractListener::__invoke`
  * Deprecate `LazyFirewallContext::__invoke()`
+
+Serializer
+----------
+
+ * Make `AttributeMetadata` and `ClassMetadata` final
+ * Deprecate class aliases in the `Annotation` namespace, use attributes instead
+ * Deprecate getters in attribute classes in favor of public properties
+
+String
+------
+
+ * Deprecate implementing `__sleep/wakeup()` on string implementations
 
 Translation
 -----------
@@ -59,6 +108,7 @@ Translation
 Validator
 ---------
 
+ * Deprecate implementing `__sleep/wakeup()` on `GenericMetadata` implementations; use `__(un)serialize()` instead
  * Deprecate passing a list of choices to the first argument of the `Choice` constraint. Use the `choices` option instead
  * Deprecate `getRequiredOptions()` and `getDefaultOption()` methods of the `All`, `AtLeastOneOf`, `CardScheme`, `Collection`,
    `CssColor`, `Expression`, `Regex`, `Sequentially`, `Type`, and `When` constraints

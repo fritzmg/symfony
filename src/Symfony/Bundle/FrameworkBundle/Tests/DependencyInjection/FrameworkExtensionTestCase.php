@@ -395,7 +395,7 @@ abstract class FrameworkExtensionTestCase extends TestCase
         $transitionsMetadata = $metadataStoreDefinition->getArgument(2);
         $this->assertSame(\SplObjectStorage::class, $transitionsMetadata->getClass());
         $transitionsMetadataCall = $transitionsMetadata->getMethodCalls()[0];
-        $this->assertSame('attach', $transitionsMetadataCall[0]);
+        $this->assertSame('offsetSet', $transitionsMetadataCall[0]);
         $params = $transitionsMetadataCall[1];
         $this->assertCount(2, $params);
         $this->assertInstanceOf(Reference::class, $params[0]);
@@ -1601,7 +1601,7 @@ abstract class FrameworkExtensionTestCase extends TestCase
         $serializerExtractorDefinition = $container->getDefinition('property_info.serializer_extractor');
 
         $this->assertEquals('serializer.mapping.class_metadata_factory', $serializerExtractorDefinition->getArgument(0)->__toString());
-        $this->assertTrue(!$serializerExtractorDefinition->isPublic() || $serializerExtractorDefinition->isPrivate());
+        $this->assertTrue($serializerExtractorDefinition->isPrivate());
         $tag = $serializerExtractorDefinition->getTag('property_info.list_extractor');
         $this->assertEquals(['priority' => -999], $tag[0]);
     }

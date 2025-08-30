@@ -156,22 +156,22 @@ class CasterTest extends TestCase
 
         $this->assertDumpMatchesFormat(
             <<<'EOTXT'
-stdClass@anonymous {
-  -foo: "foo"
-}
-EOTXT
-            , $c
+                stdClass@anonymous {
+                  -foo: "foo"
+                }
+                EOTXT,
+            $c
         );
 
         $c = eval('return new class implements \Countable { private $foo = "foo"; public function count(): int { return 0; } };');
 
         $this->assertDumpMatchesFormat(
             <<<'EOTXT'
-Countable@anonymous {
-  -foo: "foo"
-}
-EOTXT
-            , $c
+                Countable@anonymous {
+                  -foo: "foo"
+                }
+                EOTXT,
+            $c
         );
     }
 
@@ -196,7 +196,9 @@ EOTXT
               #e: "e"
               -f: "f"
             }
-            DUMP, new B());
+            DUMP,
+            new B()
+        );
     }
 }
 

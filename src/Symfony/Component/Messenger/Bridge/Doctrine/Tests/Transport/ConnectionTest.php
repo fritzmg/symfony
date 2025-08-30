@@ -29,6 +29,7 @@ use Doctrine\DBAL\Query\ForUpdate\ConflictResolutionMode;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
+use Doctrine\DBAL\Schema\NamedObject;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaConfig;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -862,6 +863,12 @@ class ConnectionTest extends TestCase
     {
         $driverConnection = $this->createMock(DBALConnection::class);
         $driverConnection->method('getDatabasePlatform')->willReturn(new OraclePlatform());
+
+        // Mock the result returned by executeQuery to be an Oracle version 12.1.0 or higher.
+        $result = $this->createMock(Result::class);
+        $result->method('fetchOne')->willReturn('12.1.0');
+        $driverConnection->method('executeQuery')->willReturn($result);
+
         $schema = new Schema();
 
         $connection = new Connection(['table_name' => 'messenger_messages'], $driverConnection);
@@ -871,7 +878,14 @@ class ConnectionTest extends TestCase
         $sequences = $schema->getSequences();
         $this->assertCount(1, $sequences);
         $sequence = array_pop($sequences);
-        $sequenceNameSuffix = substr($sequence->getName(), -\strlen($expectedSuffix));
+        if ($sequence instanceof NamedObject) {
+            // DBAL 4.4+
+            $sequenceName = $sequence->getObjectName()->toString();
+        } else {
+            // DBAL < 4.4
+            $sequenceName = $sequence->getName();
+        }
+        $sequenceNameSuffix = substr($sequenceName, -\strlen($expectedSuffix));
         $this->assertSame($expectedSuffix, $sequenceNameSuffix);
     }
 }

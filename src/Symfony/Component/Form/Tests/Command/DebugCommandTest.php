@@ -46,14 +46,15 @@ class DebugCommandTest extends TestCase
         $this->assertEquals(0, $ret, 'Returns 0 in case of success');
         $this->assertSame(<<<TXT
 
-Service form types
-------------------
+            Service form types
+            ------------------
 
- * Symfony\Component\Form\Tests\Command\FooType
+             * Symfony\Component\Form\Tests\Command\FooType
 
 
-TXT
-            , $tester->getDisplay(true));
+            TXT,
+            $tester->getDisplay(true)
+        );
     }
 
     public function testDebugSingleFormType()
@@ -94,12 +95,12 @@ TXT
     public function testDebugAmbiguousFormType()
     {
         $expectedMessage = <<<TXT
-The type "AmbiguousType" is ambiguous.
+            The type "AmbiguousType" is ambiguous.
 
-Did you mean one of these?
-    Symfony\Component\Form\Tests\Fixtures\Debug\A\AmbiguousType
-    Symfony\Component\Form\Tests\Fixtures\Debug\B\AmbiguousType
-TXT;
+            Did you mean one of these?
+                Symfony\Component\Form\Tests\Fixtures\Debug\A\AmbiguousType
+                Symfony\Component\Form\Tests\Fixtures\Debug\B\AmbiguousType
+            TXT;
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedMessage);
@@ -126,16 +127,17 @@ TXT;
         $output = $tester->getDisplay(true);
         $this->assertStringMatchesFormat(<<<TXT
 
- The type "AmbiguousType" is ambiguous.
+             The type "AmbiguousType" is ambiguous.
 
-Select one of the following form types to display its information: [%A\A\AmbiguousType]:
-  [0] %A\A\AmbiguousType
-  [1] %A\B\AmbiguousType
-%A
-%A\A\AmbiguousType (Block prefix: "ambiguous")
-%A
-TXT
-            , $output);
+            Select one of the following form types to display its information: [%A\A\AmbiguousType]:
+              [0] %A\A\AmbiguousType
+              [1] %A\B\AmbiguousType
+            %A
+            %A\A\AmbiguousType (Block prefix: "ambiguous")
+            %A
+            TXT,
+            $output
+        );
     }
 
     public function testDebugInvalidFormType()
@@ -152,39 +154,40 @@ TXT
         $this->assertEquals(0, $ret, 'Returns 0 in case of success');
         $this->assertStringMatchesFormat(<<<'TXT'
 
-Symfony\Component\Form\Tests\Command\FooType (foo)
-==================================================
+            Symfony\Component\Form\Tests\Command\FooType (foo)
+            ==================================================
 
- ---------------- -----------%s
-  Info             "Info"    %s
- ---------------- -----------%s
-  Required         true      %s
- ---------------- -----------%s
-  Default          -         %s
- ---------------- -----------%s
-  Allowed types    [         %s
-                     "string"%s
-                   ]         %s
- ---------------- -----------%s
-  Allowed values   [         %s
-                     "bar",  %s
-                     "baz"   %s
-                   ]         %s
- ---------------- -----------%s
-  Normalizers      [         %s
-                     Closure(%s
-                       class:%s
-                       this: %s
-                       file: %s
-                       line: %s
-                     }       %s
-                   ]         %s
- ---------------- -----------%s
-  Nested Options   -         %s
- ---------------- -----------%s
+             ---------------- -----------%s
+              Info             "Info"    %s
+             ---------------- -----------%s
+              Required         true      %s
+             ---------------- -----------%s
+              Default          -         %s
+             ---------------- -----------%s
+              Allowed types    [         %s
+                                 "string"%s
+                               ]         %s
+             ---------------- -----------%s
+              Allowed values   [         %s
+                                 "bar",  %s
+                                 "baz"   %s
+                               ]         %s
+             ---------------- -----------%s
+              Normalizers      [         %s
+                                 Closure(%s
+                                   class:%s
+                                   this: %s
+                                   file: %s
+                                   line: %s
+                                 }       %s
+                               ]         %s
+             ---------------- -----------%s
+              Nested Options   -         %s
+             ---------------- -----------%s
 
-TXT
-            , $tester->getDisplay(true));
+            TXT,
+            $tester->getDisplay(true)
+        );
     }
 
     #[DataProvider('provideCompletionSuggestions')]

@@ -29,12 +29,14 @@ class SocketCasterTest extends TestCase
 
         $this->assertDumpMatchesFormat(
             <<<'EODUMP'
-Socket {
-  uri: "udp://127.0.0.1:%d"
-  timed_out: false
-  blocked: true%A
-}
-EODUMP, $socket);
+                Socket {
+                  uri: "udp://127.0.0.1:%d"
+                  timed_out: false
+                  blocked: true%A
+                }
+                EODUMP,
+            $socket
+        );
     }
 
     #[RequiresPhp('<8.3')]
@@ -45,11 +47,13 @@ EODUMP, $socket);
 
         $this->assertDumpMatchesFormat(
             <<<'EODUMP'
-Socket {
-  timed_out: false
-  blocked: true
-}
-EODUMP, $socket);
+                Socket {
+                  timed_out: false
+                  blocked: true
+                }
+                EODUMP,
+            $socket
+        );
     }
 
     #[RequiresPhp('8.3')]
@@ -60,13 +64,15 @@ EODUMP, $socket);
 
         $this->assertDumpMatchesFormat(
             <<<'EODUMP'
-Socket {
-  uri: "tcp://[%A]:%d"
-  timed_out: false
-  blocked: true
-  last_error: SOCKET_ECONNREFUSED
-}
-EODUMP, $socket);
+                Socket {
+                  uri: "tcp://[%A]:%d"
+                  timed_out: false
+                  blocked: true
+                  last_error: SOCKET_ECONNREFUSED
+                }
+                EODUMP,
+            $socket
+        );
     }
 
     #[RequiresPhp('<8.3')]
@@ -77,12 +83,14 @@ EODUMP, $socket);
 
         $this->assertDumpMatchesFormat(
             <<<'EODUMP'
-Socket {
-  timed_out: false
-  blocked: true
-  last_error: SOCKET_ECONNREFUSED
-}
-EODUMP, $socket);
+                Socket {
+                  timed_out: false
+                  blocked: true
+                  last_error: SOCKET_ECONNREFUSED
+                }
+                EODUMP,
+            $socket
+        );
     }
 
     #[RequiresPhp('8.3')]
@@ -93,13 +101,15 @@ EODUMP, $socket);
 
         $this->assertDumpMatchesFormat(
             <<<'EODUMP'
-Socket {
-  uri: "unix://"
-  timed_out: false
-  blocked: true
-  last_error: SOCKET_ENOENT
-}
-EODUMP, $socket);
+                Socket {
+                  uri: "unix://"
+                  timed_out: false
+                  blocked: true
+                  last_error: SOCKET_ENOENT
+                }
+                EODUMP,
+            $socket
+        );
     }
 
     #[RequiresPhp('<8.3')]
@@ -110,11 +120,13 @@ EODUMP, $socket);
 
         $this->assertDumpMatchesFormat(
             <<<'EODUMP'
-Socket {
-  timed_out: false
-  blocked: true
-  last_error: SOCKET_ENOENT
-}
-EODUMP, $socket);
+                Socket {
+                  timed_out: false
+                  blocked: true
+                  last_error: SOCKET_ENOENT
+                }
+                EODUMP,
+            $socket
+        );
     }
 }

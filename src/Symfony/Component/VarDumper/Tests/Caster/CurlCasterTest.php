@@ -28,12 +28,14 @@ class CurlCasterTest extends TestCase
 
         $this->assertDumpMatchesFormat(
             <<<'EODUMP'
-CurlHandle {
-  url: "http://example.com/"
-  content_type: "text/html"
-  http_code: %d
-%A
-}
-EODUMP, $ch);
+                CurlHandle {
+                  url: "http://example.com/"
+                  content_type: "text/html"
+                  http_code: %d
+                %A
+                }
+                EODUMP,
+            $ch
+        );
     }
 }
