@@ -17,11 +17,15 @@ use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\Exception\InvalidArgumentException;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Mailer\Transport\Dsn;
 use Symfony\Component\Mailer\Transport\FailoverTransport;
 use Symfony\Component\Mailer\Transport\RoundRobinTransport;
+use Symfony\Component\Mailer\Transport\TransportFactoryInterface;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\RawMessage;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
+use Symfony\Contracts\Service\ServiceProviderInterface;
 
 class TransportTest extends TestCase
 {
@@ -97,6 +101,58 @@ class TransportTest extends TestCase
         yield 'failover not closed' => ['failover(dummy://a', 'The mailer DSN must contain a scheme.'];
 
         yield 'not a valid keyword' => ['foobar(dummy://a)', 'The "foobar" keyword is not valid (valid ones are "failover", "roundrobin")'];
+    }
+
+    public function testSetsRateLimiter()
+    {
+        $rateLimiterFactory = $this->createMock(RateLimiterFactoryInterface::class);
+
+        $rateLimiterLocator = $this->createMock(ServiceProviderInterface::class);
+        $rateLimiterLocator
+            ->expects($this->exactly(2))
+            ->method('get')
+            ->willReturnCallback(
+                static function (string $name) use ($rateLimiterFactory): RateLimiterFactoryInterface|null {
+                    return match ($name) {
+                        'foobar' => $rateLimiterFactory,
+                        default => null,
+                    };
+                }
+            )
+        ;
+
+        $transportFactory = $this->createMock(TransportFactoryInterface::class);
+        $transportFactory
+            ->expects($this->exactly(2))
+            ->method('supports')
+            ->willReturn(true)
+        ;
+
+        $transportFactory
+            ->expects($this->exactly(2))
+            ->method('create')
+            ->willReturnCallback(
+                function (Dsn $dsn) use ($rateLimiterFactory): TransportInterface {
+                    $transport = $this->createMock(AbstractTransport::class);
+
+                    if ('a' === $dsn->getHost()) {
+                        $transport
+                            ->expects($this->once())
+                            ->method('setRateLimiterFactory')
+                            ->with($rateLimiterFactory)
+                        ;
+                    }
+
+                    return $transport;
+                }
+            )
+        ;
+
+        $transportFactory = new Transport([$transportFactory], $rateLimiterLocator);
+        $transportFactory->fromStrings([
+            'foobar' => 'dummy://a',
+            'moobar' => 'dummy://b'
+        ]);
     }
 }
 
